@@ -21,7 +21,7 @@ locals {
 # In the future, we may want to source our code from an s3 bucket instead of a local zip.
 data "archive_file" "zip_file" {
   type        = "zip"
-  output_path = format("%s/%s.zip", var.local_file_dir, replace(var.local_file_name, ".zip", ""))
+  output_path = format("%s/%s.zip", var.local_file_dir, local.name)
 
   dynamic "source" {
     for_each = distinct(flatten([for blob in var.file_globs : fileset(var.source_code_dir, blob)]))
@@ -70,11 +70,11 @@ module "s3" {
 
 resource "aws_s3_object" "this" {
   bucket = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
-  key    = format("%s.zip", replace(var.local_file_name, ".zip", ""))
+  key    = format("%s.zip", local.name)
   source = data.archive_file.zip_file.output_path
   etag   = data.archive_file.zip_file.output_md5
 
-  tags = merge(local.tags, { "Name" = format("%s.zip", replace(var.local_file_name, ".zip", "")) })
+  tags = merge(local.tags, { "Name" = format("%s.zip", local.name) })
 }
 
 /* -------------------------------------------------------------------------- */

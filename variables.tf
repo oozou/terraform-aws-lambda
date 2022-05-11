@@ -30,11 +30,6 @@ variable "local_file_dir" {
   type        = string
 }
 
-variable "local_file_name" {
-  description = "The name of the stored file with `.zip` appended automatically."
-  type        = string
-}
-
 variable "source_code_dir" {
   description = "An absolute path to the directory containing the code to upload to lambda"
   type        = string
@@ -68,6 +63,7 @@ variable "plaintext_params" {
 
 variable "config_file_name" {
   description = "The name of the file var.plaintext_params will be written to as json"
+  type        = string
   default     = "config.json"
 }
 
