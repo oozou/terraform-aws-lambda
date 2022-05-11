@@ -17,8 +17,8 @@ locals {
 /*                                     S3                                     */
 /* -------------------------------------------------------------------------- */
 /* -------------------------------- ZIP File -------------------------------- */
-# Lambdas are uploaded to via zip files, so we create a zip out of a given directory.
-# In the future, we may want to source our code from an s3 bucket instead of a local zip.
+# Since Lambdas are uploaded via zip files, we produce a zip file from a provided directory.
+# In the future, we might source our code from an S3 bucket rather than a local zip file.
 data "archive_file" "zip_file" {
   type        = "zip"
   output_path = format("%s/%s.zip", var.local_file_dir, local.name)
@@ -81,7 +81,7 @@ resource "aws_s3_object" "this" {
 /*                               Lambda Function                              */
 /* -------------------------------------------------------------------------- */
 /* -------------------------------- IAM Role -------------------------------- */
-# to allow AWS to access this lambda function.
+# Permit AWS access to this lambda function.
 data "aws_iam_policy_document" "assume_role_policy_doc" {
   statement {
     sid    = "AllowAwsToAssumeRole"
@@ -99,7 +99,7 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
     }
   }
 }
-# Allow lambda to write logs.
+# Permit lambda to write logs.
 data "aws_iam_policy_document" "lambda_logs_policy_doc" {
   statement {
     effect = "Allow"
@@ -111,15 +111,15 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
     resources = ["*"]
   }
 }
-# Make a role that AWS services can assume that gives them access to invoke our function.
-# This policy also has permissions to write logs to CloudWatch.
+# Create a role that AWS services can adopt to enable the invocation of our function.
+# Additionally, this policy has the ability to write logs to CloudWatch.
 resource "aws_iam_role" "this" {
   name               = format("%s-function-role", local.name)
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
 
   tags = merge(local.tags, { "Name" : format("%s-function-role", local.name) })
 }
-# Attach the policy giving log write access to the IAM Role
+# Attach the policy granting IAM Role log write access.
 resource "aws_iam_role_policy" "logs_role_policy" {
   name   = format("%s-lambda-at-edge-log-access-policy", local.name)
   role   = aws_iam_role.this.id
@@ -148,4 +148,13 @@ resource "aws_lambda_function" "this" {
   }
 
   tags = merge(local.tags, { "Name" = format("%s-function", local.name) })
+}
+
+resource "aws_cloudwatch_log_group" "this" {
+  count = var.is_create_cloudwatch_log_group ? 1 : 0
+
+  name              = format("%s-lambda-log-group", local.name)
+  retention_in_days = var.retention_in_days
+
+  tags = merge(local.tags, { "Name" = format("%s-lambda-log-group", local.name) })
 }

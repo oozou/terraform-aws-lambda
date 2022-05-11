@@ -73,7 +73,7 @@ variable "config_file_name" {
 variable "is_create_lambda_bucket" {
   description = "Whether to create lambda bucket or not"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "bucket_name" {
@@ -94,3 +94,19 @@ variable "handler" {
   type        = string
   default     = "index.handler"
 }
+
+/* -------------------------------------------------------------------------- */
+/*                            CloudWatch Log Group                            */
+/* -------------------------------------------------------------------------- */
+variable "is_create_cloudwatch_log_group" {
+  description = "Whether to create cloudwatch log group or not"
+  type        = bool
+  default     = true
+}
+
+variable "retention_in_days" {
+  description = "Retention day for cloudwatch log group"
+  type        = number
+  default     = 30
+}
+
