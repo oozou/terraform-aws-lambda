@@ -85,7 +85,16 @@ variable "bucket_name" {
   type        = string
   default     = ""
 }
+/* -------------------------------------------------------------------------- */
+/*                               Lambda Function                              */
+/* -------------------------------------------------------------------------- */
+variable "runtime" {
+  description = "The runtime of the lambda function"
+  type        = string
+}
 
-
-
-
+variable "handler" {
+  description = "Function entrypoint in your code."
+  type        = string
+  default     = "index.handler"
+}
