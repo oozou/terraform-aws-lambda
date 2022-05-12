@@ -10,19 +10,34 @@ module "lambda" {
   environment = "dev"
   name        = "sigv4-request-to-s3"
 
-  # File to saved to
-  local_file_dir  = "./outputs"
-  local_file_name = "function.zip" # Auto append with .zip; you can use name.zip
-
   # File to read from
   source_code_dir = "./src"
   file_globs      = ["index.js"]
 
-  # S3 to keep source code
-  is_create_lambda_bucket = true                 # Default is `true`
+  # File to saved to
+  local_file_dir = "./outputs"
+
+  # S3 to upload source code to
+  is_create_lambda_bucket = true                 # Default is `false`; plz use false, if not 1 lambda: 1 bucket
   bucket_name             = "arn:aws:s3:::nanan" # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
 
+  # Lambda Config
+  runtime = "nodejs12.x"
+  handler = "index.handler" # Default `"index.handler"`
+
+  # Logging
+  is_create_cloudwatch_log_group = true # Default is `true`
+  retention_in_days              = 30   # Default is `30`
+
+  # Secret for lambda function
+  ssm_params = {
+    "DATABASE_PASSWORD" = "abdhegcg2365daA"
+    "DATABASE_HOST"     = "www.google.com"
+  }
+
   tags = { "Workspace" = "pc" }
+}
+
 }
 ```
 
