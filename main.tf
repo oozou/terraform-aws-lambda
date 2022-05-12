@@ -124,6 +124,13 @@ resource "aws_iam_role_policy" "logs_role_policy" {
   role   = aws_iam_role.this.id
   policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
 }
+
+resource "aws_iam_role_policy_attachment" "this" {
+  for_each = var.additional_lambda_role_policy_arns
+
+  role       = aws_iam_role.this.name
+  policy_arn = each.value
+}
 /* -------------------------------------------------------------------------- */
 /*                               Lambda Function                              */
 /* -------------------------------------------------------------------------- */

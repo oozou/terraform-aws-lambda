@@ -66,6 +66,14 @@ variable "config_file_name" {
   type        = string
   default     = "config.json"
 }
+/* -------------------------------------------------------------------------- */
+/*                                     IAM                                    */
+/* -------------------------------------------------------------------------- */
+variable "additional_lambda_role_policy_arns" {
+  description = "List of policies ARNs to attach to the lambda"
+  type        = list(string)
+  default     = []
+}
 
 /* -------------------------------------------------------------------------- */
 /*                            S3 Lambda Source Code                           */
