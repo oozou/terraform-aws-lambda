@@ -25,6 +25,9 @@ module "lambda" {
   runtime = "nodejs12.x"
   handler = "index.handler" # Default `"index.handler"`
 
+  # IAM
+  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"] # The policies that you want to attach to IAM Role created by this module
+
   # Logging
   is_create_cloudwatch_log_group = true # Default is `true`
   retention_in_days              = 30   # Default is `30`
