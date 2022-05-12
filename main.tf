@@ -215,7 +215,6 @@ resource "aws_iam_policy" "ssm_policy" {
   policy      = data.aws_iam_policy_document.secret_access_policy_doc[0].json
 }
 
-
 # Attach the policy giving SSM param access to the Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   count = length(var.ssm_params) > 0 ? 1 : 0
