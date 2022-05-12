@@ -126,7 +126,7 @@ resource "aws_iam_role_policy" "logs_role_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "this" {
-  for_each = var.additional_lambda_role_policy_arns
+  for_each = toset(var.additional_lambda_role_policy_arns)
 
   role       = aws_iam_role.this.name
   policy_arn = each.value
