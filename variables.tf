@@ -110,3 +110,30 @@ variable "retention_in_days" {
   default     = 30
 }
 
+
+variable "ssm_params" {
+  description = <<EOF
+  Lambda@Edge does not support env vars, so it is a common pattern to exchange Env vars for SSM params.
+
+  So instead of using env vars like:
+  `const someEnvValue = process.env.SOME_ENV`
+
+  you would have lookups in SSM, like:
+  `const someEnvValue = await ssmClient.getParameter({ Name: 'SOME_SSM_PARAM_NAME', WithDecryption: true })`
+
+  These params should have names that are unique within an AWS account, so it is a good idea to use a common
+  prefix in front of the param names, such as:
+
+  ```
+  params = {
+    COMMON_PREFIX_REGION = "eu-west-1"
+    COMMON_PREFIX_NAME   = "Joeseph Schreibvogel"
+  }
+  ```
+
+  Compared to var.plaintext_params, you should use this variable when you have secret data that you don't want written in plaintext in a file
+  in your lambda .zip file. These params will need to be fetched via a Promise at runtime, so there may be small performance delays.
+  EOF
+  type        = map(string)
+  default     = {}
+}

@@ -78,9 +78,8 @@ resource "aws_s3_object" "this" {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                               Lambda Function                              */
+/*                                  IAM Role                                  */
 /* -------------------------------------------------------------------------- */
-/* -------------------------------- IAM Role -------------------------------- */
 # Permit AWS access to this lambda function.
 data "aws_iam_policy_document" "assume_role_policy_doc" {
   statement {
@@ -125,7 +124,9 @@ resource "aws_iam_role_policy" "logs_role_policy" {
   role   = aws_iam_role.this.id
   policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
 }
-/* ----------------------------- Lambda Function ---------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                               Lambda Function                              */
+/* -------------------------------------------------------------------------- */
 resource "aws_lambda_function" "this" {
   function_name = format("%s-function", local.name)
   description   = format("Lambda function: %s", local.name)
@@ -150,6 +151,9 @@ resource "aws_lambda_function" "this" {
   tags = merge(local.tags, { "Name" = format("%s-function", local.name) })
 }
 
+/* -------------------------------------------------------------------------- */
+/*                            CloudWatch Log Group                            */
+/* -------------------------------------------------------------------------- */
 resource "aws_cloudwatch_log_group" "this" {
   count = var.is_create_cloudwatch_log_group ? 1 : 0
 
@@ -157,4 +161,58 @@ resource "aws_cloudwatch_log_group" "this" {
   retention_in_days = var.retention_in_days
 
   tags = merge(local.tags, { "Name" = format("%s-lambda-log-group", local.name) })
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                     SSM                                    */
+/* -------------------------------------------------------------------------- */
+# Create the secret SSM parameters that the lambda function can retrieve and decode.
+resource "aws_ssm_parameter" "params" {
+  for_each = var.ssm_params
+
+  description = format("param %s for the lambda function %s", each.key, local.name)
+
+  name  = each.key
+  value = each.value
+
+  type = "SecureString"
+  tier = length(each.value) > 4096 ? "Advanced" : "Standard"
+
+  tags = var.tags
+}
+
+# Create an IAM policy document that grants permission to read and retrieve SSM parameters.
+data "aws_iam_policy_document" "secret_access_policy_doc" {
+  count = length(var.ssm_params) > 0 ? 1 : 0
+
+  statement {
+    sid    = "AccessParams"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "secretsmanager:GetSecretValue",
+    ]
+    resources = [
+      for name, outputs in aws_ssm_parameter.params :
+      outputs.arn
+    ]
+  }
+}
+
+# Create a policy from the SSM policy document
+resource "aws_iam_policy" "ssm_policy" {
+  count = length(var.ssm_params) > 0 ? 1 : 0
+
+  name        = format("%s-ssm-policy", local.name)
+  description = format("Gives the lambda %s access to params from SSM", local.name)
+  policy      = data.aws_iam_policy_document.secret_access_policy_doc[0].json
+}
+
+
+# Attach the policy giving SSM param access to the Lambda IAM Role
+resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
+  count = length(var.ssm_params) > 0 ? 1 : 0
+
+  role       = aws_iam_role.this.id
+  policy_arn = aws_iam_policy.ssm_policy[0].arn
 }
