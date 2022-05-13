@@ -69,6 +69,18 @@ variable "config_file_name" {
 /* -------------------------------------------------------------------------- */
 /*                                     IAM                                    */
 /* -------------------------------------------------------------------------- */
+variable "is_create_lambda_role" {
+  description = "Whether to create lamda role or not"
+  type        = bool
+  default     = true
+}
+
+variable "lambda_role_arn" {
+  description = "The arn of role that already created by something to asso with lambda"
+  type        = string
+  default     = ""
+}
+
 variable "additional_lambda_role_policy_arns" {
   description = "List of policies ARNs to attach to the lambda"
   type        = list(string)

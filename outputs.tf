@@ -4,17 +4,15 @@ output "arn" {
 }
 
 output "function_arn" {
-  value = aws_lambda_function.this.arn
+  description = "function arn"
+  value       = aws_lambda_function.this.arn
 }
 output "function_name" {
   description = "Name of AWS Lambda function"
   value       = local.name
 }
 
-output "execution_role_name" {
-  value = aws_iam_role.this.name
-}
-
 output "execution_role_arn" {
-  value = aws_iam_role.this.arn
+  description = "Role arn of lambda"
+  value       = local.lambda_role_arn
 }

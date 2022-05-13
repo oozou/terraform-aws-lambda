@@ -4,6 +4,8 @@
 locals {
   name = format("%s-%s-%s", var.prefix, var.environment, var.name)
 
+  lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
+
   tags = merge(
     {
       "Environment" = var.environment,
@@ -11,6 +13,10 @@ locals {
     },
     var.tags
   )
+}
+/* ----------------------------- Raise Exception ---------------------------- */
+locals {
+  raise_is_lambda_role_arn_empty = var.is_create_lambda_role == false && var.lambda_role_arn == "" ? file("Variable `lambda_role_arn` is required when `is_create_lambda_role` is false") : "pass"
 }
 
 /* -------------------------------------------------------------------------- */
@@ -82,6 +88,8 @@ resource "aws_s3_object" "this" {
 /* -------------------------------------------------------------------------- */
 # Permit AWS access to this lambda function.
 data "aws_iam_policy_document" "assume_role_policy_doc" {
+  count = var.is_create_lambda_role ? 1 : 0
+
   statement {
     sid    = "AllowAwsToAssumeRole"
     effect = "Allow"
@@ -100,6 +108,8 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
 }
 # Permit lambda to write logs.
 data "aws_iam_policy_document" "lambda_logs_policy_doc" {
+  count = var.is_create_lambda_role ? 1 : 0
+
   statement {
     effect = "Allow"
     actions = [
@@ -113,22 +123,26 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
 # Create a role that AWS services can adopt to enable the invocation of our function.
 # Additionally, this policy has the ability to write logs to CloudWatch.
 resource "aws_iam_role" "this" {
+  count = var.is_create_lambda_role ? 1 : 0
+
   name               = format("%s-function-role", local.name)
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc[0].json
 
   tags = merge(local.tags, { "Name" : format("%s-function-role", local.name) })
 }
 # Attach the policy granting IAM Role log write access.
 resource "aws_iam_role_policy" "logs_role_policy" {
+  count = var.is_create_lambda_role ? 1 : 0
+
   name   = format("%s-lambda-at-edge-log-access-policy", local.name)
-  role   = aws_iam_role.this.id
-  policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
+  role   = aws_iam_role.this[0].id
+  policy = data.aws_iam_policy_document.lambda_logs_policy_doc[0].json
 }
 
 resource "aws_iam_role_policy_attachment" "this" {
-  for_each = toset(var.additional_lambda_role_policy_arns)
+  for_each = var.is_create_lambda_role ? toset(var.additional_lambda_role_policy_arns) : toset([])
 
-  role       = aws_iam_role.this.name
+  role       = aws_iam_role.this[0].name
   policy_arn = each.value
 }
 /* -------------------------------------------------------------------------- */
@@ -147,7 +161,7 @@ resource "aws_lambda_function" "this" {
   publish = true
   runtime = var.runtime
   handler = var.handler
-  role    = aws_iam_role.this.arn
+  role    = local.lambda_role_arn
 
   lifecycle {
     ignore_changes = [
@@ -190,7 +204,7 @@ resource "aws_ssm_parameter" "params" {
 
 # Create an IAM policy document that grants permission to read and retrieve SSM parameters.
 data "aws_iam_policy_document" "secret_access_policy_doc" {
-  count = length(var.ssm_params) > 0 ? 1 : 0
+  count = var.is_create_lambda_role && length(var.ssm_params) > 0 ? 1 : 0
 
   statement {
     sid    = "AccessParams"
@@ -208,7 +222,7 @@ data "aws_iam_policy_document" "secret_access_policy_doc" {
 
 # Create a policy from the SSM policy document
 resource "aws_iam_policy" "ssm_policy" {
-  count = length(var.ssm_params) > 0 ? 1 : 0
+  count = var.is_create_lambda_role && length(var.ssm_params) > 0 ? 1 : 0
 
   name        = format("%s-ssm-policy", local.name)
   description = format("Gives the lambda %s access to params from SSM", local.name)
@@ -217,8 +231,8 @@ resource "aws_iam_policy" "ssm_policy" {
 
 # Attach the policy giving SSM param access to the Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
-  count = length(var.ssm_params) > 0 ? 1 : 0
+  count = var.is_create_lambda_role && length(var.ssm_params) > 0 ? 1 : 0
 
-  role       = aws_iam_role.this.id
+  role       = aws_iam_role.this[0].id
   policy_arn = aws_iam_policy.ssm_policy[0].arn
 }
