@@ -4,7 +4,7 @@
 
 ```terraform
 module "lambda" {
-  source = "<source>"
+  source = "../"
 
   prefix      = "sbth"
   environment = "dev"
@@ -26,7 +26,9 @@ module "lambda" {
   handler = "index.handler" # Default `"index.handler"`
 
   # IAM
-  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"] # The policies that you want to attach to IAM Role created by this module
+  is_create_lambda_role              = true                                               # Default is `true`
+  lambda_role_arn                    = ""                                                 # If `is_create_lambda_role` is `false`
+  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"] # The policies that you want to attach to IAM Role created by only this module
 
   # Logging
   is_create_cloudwatch_log_group = true # Default is `true`
@@ -40,6 +42,7 @@ module "lambda" {
 
   tags = { "Workspace" = "pc" }
 }
+
 ```
 
 <!-- BEGIN_TF_DOCS -->
