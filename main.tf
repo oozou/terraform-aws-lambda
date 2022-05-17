@@ -138,44 +138,6 @@ resource "aws_iam_role_policy_attachment" "this" {
   role       = aws_iam_role.this[0].name
   policy_arn = each.value
 }
-/* -------------------------------------------------------------------------- */
-/*                               Lambda Function                              */
-/* -------------------------------------------------------------------------- */
-resource "aws_lambda_function" "this" {
-  function_name = format("%s-function", local.name)
-  description   = format("Lambda function: %s", local.name)
-
-  # Read the file from s3
-  s3_bucket         = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
-  s3_key            = aws_s3_object.this.id
-  s3_object_version = aws_s3_object.this.version_id
-  source_code_hash  = filebase64sha256(data.archive_file.zip_file.output_path)
-
-  publish = true
-  runtime = var.runtime
-  handler = var.handler
-  role    = local.lambda_role_arn
-
-  lifecycle {
-    ignore_changes = [
-      last_modified,
-    ]
-  }
-
-  tags = merge(local.tags, { "Name" = format("%s-function", local.name) })
-}
-
-/* -------------------------------------------------------------------------- */
-/*                            CloudWatch Log Group                            */
-/* -------------------------------------------------------------------------- */
-resource "aws_cloudwatch_log_group" "this" {
-  count = var.is_create_cloudwatch_log_group ? 1 : 0
-
-  name              = format("%s-lambda-log-group", local.name)
-  retention_in_days = var.retention_in_days
-
-  tags = merge(local.tags, { "Name" = format("%s-lambda-log-group", local.name) })
-}
 
 /* -------------------------------------------------------------------------- */
 /*                                     SSM                                    */
@@ -224,4 +186,43 @@ resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
 
   role       = aws_iam_role.this[0].id
   policy_arn = aws_iam_policy.ssm_policy[0].arn
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Lambda Function                              */
+/* -------------------------------------------------------------------------- */
+resource "aws_lambda_function" "this" {
+  function_name = format("%s-function", local.name)
+  description   = format("Lambda function: %s", local.name)
+
+  # Read the file from s3
+  s3_bucket         = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
+  s3_key            = aws_s3_object.this.id
+  s3_object_version = aws_s3_object.this.version_id
+  source_code_hash  = filebase64sha256(data.archive_file.zip_file.output_path)
+
+  publish = true
+  runtime = var.runtime
+  handler = var.handler
+  role    = local.lambda_role_arn
+
+  lifecycle {
+    ignore_changes = [
+      last_modified,
+    ]
+  }
+
+  tags = merge(local.tags, { "Name" = format("%s-function", local.name) })
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            CloudWatch Log Group                            */
+/* -------------------------------------------------------------------------- */
+resource "aws_cloudwatch_log_group" "this" {
+  count = var.is_create_cloudwatch_log_group ? 1 : 0
+
+  name              = format("%s-lambda-log-group", local.name)
+  retention_in_days = var.retention_in_days
+
+  tags = merge(local.tags, { "Name" = format("%s-lambda-log-group", local.name) })
 }
