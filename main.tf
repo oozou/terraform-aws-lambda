@@ -23,8 +23,6 @@ locals {
 /*                                     S3                                     */
 /* -------------------------------------------------------------------------- */
 /* -------------------------------- ZIP File -------------------------------- */
-# Since Lambdas are uploaded via zip files, we produce a zip file from a provided directory.
-# In the future, we might source our code from an S3 bucket rather than a local zip file.
 data "archive_file" "zip_file" {
   type        = "zip"
   output_path = format("%s/%s.zip", var.local_file_dir, local.name)
@@ -54,9 +52,6 @@ data "archive_file" "zip_file" {
   }
 }
 
-# Upload the build artifact zip file to S3.
-# Doing this makes the plans more resiliant, where it won't always
-# appear that the function needs to be updated
 module "s3" {
   count = var.is_create_lambda_bucket ? 1 : 0
 
@@ -86,7 +81,6 @@ resource "aws_s3_object" "this" {
 /* -------------------------------------------------------------------------- */
 /*                                  IAM Role                                  */
 /* -------------------------------------------------------------------------- */
-# Permit AWS access to this lambda function.
 data "aws_iam_policy_document" "assume_role_policy_doc" {
   count = var.is_create_lambda_role ? 1 : 0
 
@@ -106,7 +100,7 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
     }
   }
 }
-# Permit lambda to write logs.
+
 data "aws_iam_policy_document" "lambda_logs_policy_doc" {
   count = var.is_create_lambda_role ? 1 : 0
 
@@ -120,8 +114,7 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
     resources = ["*"]
   }
 }
-# Create a role that AWS services can adopt to enable the invocation of our function.
-# Additionally, this policy has the ability to write logs to CloudWatch.
+
 resource "aws_iam_role" "this" {
   count = var.is_create_lambda_role ? 1 : 0
 
@@ -130,7 +123,7 @@ resource "aws_iam_role" "this" {
 
   tags = merge(local.tags, { "Name" : format("%s-function-role", local.name) })
 }
-# Attach the policy granting IAM Role log write access.
+
 resource "aws_iam_role_policy" "logs_role_policy" {
   count = var.is_create_lambda_role ? 1 : 0
 
@@ -187,7 +180,6 @@ resource "aws_cloudwatch_log_group" "this" {
 /* -------------------------------------------------------------------------- */
 /*                                     SSM                                    */
 /* -------------------------------------------------------------------------- */
-# Create the secret SSM parameters that the lambda function can retrieve and decode.
 resource "aws_ssm_parameter" "params" {
   for_each = var.ssm_params
 
@@ -202,7 +194,6 @@ resource "aws_ssm_parameter" "params" {
   tags = var.tags
 }
 
-# Create an IAM policy document that grants permission to read and retrieve SSM parameters.
 data "aws_iam_policy_document" "secret_access_policy_doc" {
   count = var.is_create_lambda_role && length(var.ssm_params) > 0 ? 1 : 0
 
@@ -220,7 +211,6 @@ data "aws_iam_policy_document" "secret_access_policy_doc" {
   }
 }
 
-# Create a policy from the SSM policy document
 resource "aws_iam_policy" "ssm_policy" {
   count = var.is_create_lambda_role && length(var.ssm_params) > 0 ? 1 : 0
 
@@ -229,7 +219,6 @@ resource "aws_iam_policy" "ssm_policy" {
   policy      = data.aws_iam_policy_document.secret_access_policy_doc[0].json
 }
 
-# Attach the policy giving SSM param access to the Lambda IAM Role
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   count = var.is_create_lambda_role && length(var.ssm_params) > 0 ? 1 : 0
 
