@@ -4,11 +4,13 @@
 
 ```terraform
 module "lambda" {
-  source = "../"
+  source = "<source>"
 
-  prefix      = "sbth"
-  environment = "dev"
-  name        = "sigv4-request-to-s3"
+  prefix      = "oozou"
+  environment = "test"
+  name        = "jukkee"
+
+  is_edge = false  # Default is `false`
 
   # File to read from
   source_code_dir = "./src"
@@ -18,8 +20,8 @@ module "lambda" {
   local_file_dir = "./outputs"
 
   # S3 to upload source code to
-  is_create_lambda_bucket = true                 # Default is `false`; plz use false, if not 1 lambda: 1 bucket
-  bucket_name             = "arn:aws:s3:::nanan" # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
+  is_create_lambda_bucket = true # Default is `false`; plz use false, if not 1 lambda: 1 bucket
+  bucket_name             = ""   # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
 
   # Lambda Config
   runtime = "nodejs12.x"
@@ -29,6 +31,23 @@ module "lambda" {
   is_create_lambda_role              = true                                               # Default is `true`
   lambda_role_arn                    = ""                                                 # If `is_create_lambda_role` is `false`
   additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"] # The policies that you want to attach to IAM Role created by only this module
+
+  # Resource policy
+  lambda_permission_configuration = {
+    lambda_on_my_account = {
+      pricipal       = "apigateway.amazonaws.com"
+      source_arn     = "arn:aws:execute-api:ap-southeast-1:557291035693:lk36vflbha/*/*/"
+    }
+    lambda_on_my_another_account_wrong = {
+      pricipal       = "apigateway.amazonaws.com"
+      source_arn     = "arn:aws:execute-api:ap-southeast-1:562563527952:q6pwa6wgr6/*/*/"
+      source_account = "557291035693"  # Optional just to restrict the permission
+    }
+    lambda_on_my_another_account_correct = {
+      pricipal   = "apigateway.amazonaws.com"
+      source_arn = "arn:aws:execute-api:ap-southeast-1:562563527952:q6pwa6wgr6/*/*/"
+    }
+  }
 
   # Logging
   is_create_cloudwatch_log_group = true # Default is `true`
@@ -40,7 +59,7 @@ module "lambda" {
     "DATABASE_HOST"     = "www.google.com"
   }
 
-  tags = { "Workspace" = "pc" }
+  tags = { "Workspace" = "xxx-yyy-zzz" }
 }
 
 ```

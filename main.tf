@@ -4,8 +4,7 @@
 locals {
   name = format("%s-%s-%s", var.prefix, var.environment, var.name)
 
-  service_resource_based_policy_count = var.resource_type_to_allow_invoke == "service" ? 1 : 0
-  lambda_role_arn                     = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
+  lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
 
   tags = merge(
     {
@@ -82,54 +81,18 @@ resource "aws_s3_object" "this" {
 /* -------------------------------------------------------------------------- */
 /*                            Resource Based Policy                           */
 /* -------------------------------------------------------------------------- */
-# data "aws_iam_policy_document" "service_caller" {
-#   count = local.service_resource_based_policy_count
-
-#   statement {
-#     sid = "AllowInvokeLambdaFunctionFromService"
-
-#     actions = [
-#       "lambda:InvokeFunction"
-#     ]
-
-#     resources = [aws_lambda_function.this.arn]
-
-#     principals {
-#       type        = "AWS"
-#       identifiers = ["*"]
-#     }
-
-#     condition {
-#       test     = "StringEquals"
-#       variable = "kms:ViaService"
-#       values   = var.service_info.aws_service_names
-#     }
-
-#     condition {
-#       test     = "StringEquals"
-#       variable = "kms:CallerAccount"
-#       values   = var.service_info.aws_service_principals
-#     }
-#   }
-# }
-
-
-# data "aws_iam_policy_document" "lambda_policy" {
-#   source_policy_documents = local.service_resource_based_policy_count == 1 ? [
-#     xxxxxxx, data.aws_iam_policy_document.service_caller[0].json] : [
-#     xxxxxxx, data.aws_iam_policy_document.account_caller[0].json
-#   ]
-#   # override_policy_documents = var.additional_policies
-# }
-
 resource "aws_lambda_permission" "allow_serivce" {
-  count = local.service_resource_based_policy_count
+  for_each = var.lambda_permission_configuration
 
-  statement_id  = "AllowExecutionFromService"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.this.function_name
-  principal     = var.service_info.aws_service_principal
-  source_arn    = var.service_info.aws_service_arn
+  statement_id   = format("AllowExecutionFrom-%s", each.key)
+  action         = "lambda:InvokeFunction"
+  function_name  = aws_lambda_function.this.function_name
+  principal      = lookup(each.value, "pricipal", null)
+  source_arn     = lookup(each.value, "source_arn", null)
+  source_account = lookup(each.value, "source_account", null)
+  # principal_org_id = lookup(each.value, "principal_org_id", "")
+  # Terraform aws says not support by doc support
+  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission#principal_org_id
 }
 
 /* -------------------------------------------------------------------------- */
