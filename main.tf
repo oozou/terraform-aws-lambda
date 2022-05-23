@@ -4,7 +4,8 @@
 locals {
   name = format("%s-%s-%s", var.prefix, var.environment, var.name)
 
-  lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
+  service_resource_based_policy_count = var.resource_type_to_allow_invoke == "service" ? 1 : 0
+  lambda_role_arn                     = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
 
   tags = merge(
     {
@@ -59,7 +60,7 @@ module "s3" {
 
   prefix      = var.prefix
   environment = var.environment
-  bucket_name = format("%s-lambda-bucket", var.name)
+  bucket_name = var.is_edge ? format("%s-lambda-edge-bucket", var.name) : format("%s-lambda-bucket", var.name)
 
   force_s3_destroy = true
 
@@ -79,6 +80,59 @@ resource "aws_s3_object" "this" {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                            Resource Based Policy                           */
+/* -------------------------------------------------------------------------- */
+# data "aws_iam_policy_document" "service_caller" {
+#   count = local.service_resource_based_policy_count
+
+#   statement {
+#     sid = "AllowInvokeLambdaFunctionFromService"
+
+#     actions = [
+#       "lambda:InvokeFunction"
+#     ]
+
+#     resources = [aws_lambda_function.this.arn]
+
+#     principals {
+#       type        = "AWS"
+#       identifiers = ["*"]
+#     }
+
+#     condition {
+#       test     = "StringEquals"
+#       variable = "kms:ViaService"
+#       values   = var.service_info.aws_service_names
+#     }
+
+#     condition {
+#       test     = "StringEquals"
+#       variable = "kms:CallerAccount"
+#       values   = var.service_info.aws_service_principals
+#     }
+#   }
+# }
+
+
+# data "aws_iam_policy_document" "lambda_policy" {
+#   source_policy_documents = local.service_resource_based_policy_count == 1 ? [
+#     xxxxxxx, data.aws_iam_policy_document.service_caller[0].json] : [
+#     xxxxxxx, data.aws_iam_policy_document.account_caller[0].json
+#   ]
+#   # override_policy_documents = var.additional_policies
+# }
+
+resource "aws_lambda_permission" "allow_serivce" {
+  count = local.service_resource_based_policy_count
+
+  statement_id  = "AllowExecutionFromService"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.this.function_name
+  principal     = var.service_info.aws_service_principal
+  source_arn    = var.service_info.aws_service_arn
+}
+
+/* -------------------------------------------------------------------------- */
 /*                                  IAM Role                                  */
 /* -------------------------------------------------------------------------- */
 data "aws_iam_policy_document" "assume_role_policy_doc" {
@@ -93,8 +147,10 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
     principals {
       type = "Service"
 
-      identifiers = [
+      identifiers = var.is_edge ? [
         "edgelambda.amazonaws.com",
+        "lambda.amazonaws.com",
+        ] : [
         "lambda.amazonaws.com",
       ]
     }
@@ -127,7 +183,7 @@ resource "aws_iam_role" "this" {
 resource "aws_iam_role_policy" "logs_role_policy" {
   count = var.is_create_lambda_role ? 1 : 0
 
-  name   = format("%s-lambda-at-edge-log-access-policy", local.name)
+  name   = var.is_edge ? format("%s-lambda-at-edge-log-access-policy", local.name) : format("%s-lambda-log-access-policy", local.name)
   role   = aws_iam_role.this[0].id
   policy = data.aws_iam_policy_document.lambda_logs_policy_doc[0].json
 }

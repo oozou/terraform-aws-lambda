@@ -67,6 +67,33 @@ variable "config_file_name" {
   default     = "config.json"
 }
 /* -------------------------------------------------------------------------- */
+/*                            Resource Based Policy                           */
+/* -------------------------------------------------------------------------- */
+variable "resource_type_to_allow_invoke" {
+  description = "Resource to allow to invoke this lambda function"
+  type        = string
+  validation {
+    condition     = contains(["service", "account"], var.resource_type_to_allow_invoke)
+    error_message = "Valid values for `resource_type_to_allow_invoke` are `service` and `account`."
+  }
+}
+
+variable "service_info" {
+  description = <<EOF
+  aws_service_principal >> The principal who is getting this permission e.g., s3.amazonaws.com, an AWS account ID, or any valid AWS service principal such as events.amazonaws.com or sns.amazonaws.com.
+  aws_service_arn       >> When the principal is an AWS service, the ARN of the specific resource within that service to grant permission to.
+  EOF
+  type = object({
+    aws_service_arn       = string
+    aws_service_principal = string
+  })
+  default = {
+    aws_service_arn       = ""
+    aws_service_principal = ""
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /*                                     IAM                                    */
 /* -------------------------------------------------------------------------- */
 variable "is_create_lambda_role" {
@@ -104,6 +131,12 @@ variable "bucket_name" {
 /* -------------------------------------------------------------------------- */
 /*                               Lambda Function                              */
 /* -------------------------------------------------------------------------- */
+variable "is_edge" {
+  description = "Whether lambda is lambda@Edge or not"
+  type        = bool
+  default     = false
+}
+
 variable "runtime" {
   description = "The runtime of the lambda function"
   type        = string
