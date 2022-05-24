@@ -10,7 +10,7 @@ module "lambda" {
   environment = "test"
   name        = "resource"
 
-  is_edge = false # Defautl is `fault`, If you want to publish to the edge don't forget to override aws's provider to virgina
+  is_edge = false # Default is "false." If you want to publish to the edge, don't forget to change AWS's provider to Virginia.
 
   # File to read from
   source_code_dir = "./src"
@@ -29,14 +29,14 @@ module "lambda" {
 
   # Lambda Specification
   timeout                        = 3   # Default is `3` seconds
-  memory_size                    = 128 # Default is `128` MB, the more mem size increase, the performance is better
+  memory_size                    = 128 # Default is `128` MB. as memory size increases, performance improves.
   reserved_concurrent_executions = -1
   ## Optional to connect Lambda to VPC
   vpc_config = {
     security_group_ids      = ["sg-028f637312eea735e"]
     subnet_ids_to_associate = ["subnet-0b853f8c85796d72d", "subnet-07c068b4b51262793", "subnet-0362f68c559ef7716"]
   }
-  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # To send failed processing to target
+  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # Default is `null`; to send failed processing to target
 
   # IAM
   is_create_lambda_role              = true                                                 # Default is `true`
