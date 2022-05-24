@@ -4,13 +4,13 @@
 
 ```terraform
 module "lambda" {
-  source = "<source>"
+  source = "../"
 
   prefix      = "oozou"
   environment = "test"
-  name        = "jukkee"
+  name        = "resource"
 
-  is_edge = false  # Default is `false`
+  is_edge = false # Defautl is `fault`, If you want to publish to the edge don't forget to override aws's provider to virgina
 
   # File to read from
   source_code_dir = "./src"
@@ -23,14 +23,25 @@ module "lambda" {
   is_create_lambda_bucket = true # Default is `false`; plz use false, if not 1 lambda: 1 bucket
   bucket_name             = ""   # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
 
-  # Lambda Config
+  # Lambda Env
   runtime = "nodejs12.x"
   handler = "index.handler" # Default `"index.handler"`
 
+  # Lambda Specification
+  timeout                        = 3   # Default is `3` seconds
+  memory_size                    = 128 # Default is `128` MB, the more mem size increase, the performance is better
+  reserved_concurrent_executions = -1
+  ## Optional to connect Lambda to VPC
+  vpc_config = {
+    security_group_ids      = ["sg-028f637312eea735e"]
+    subnet_ids_to_associate = ["subnet-0b853f8c85796d72d", "subnet-07c068b4b51262793", "subnet-0362f68c559ef7716"]
+  }
+  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # To send failed processing to target
+
   # IAM
-  is_create_lambda_role              = true                                               # Default is `true`
-  lambda_role_arn                    = ""                                                 # If `is_create_lambda_role` is `false`
-  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"] # The policies that you want to attach to IAM Role created by only this module
+  is_create_lambda_role              = true                                                 # Default is `true`
+  lambda_role_arn                    = ""                                                   # If `is_create_lambda_role` is `false`
+  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", ] # The policies that you want to attach to IAM Role created by only this module
 
   # Resource policy
   lambda_permission_configuration = {

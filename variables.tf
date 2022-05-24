@@ -117,6 +117,48 @@ variable "is_edge" {
   default     = false
 }
 
+variable "timeout" {
+  description = "(Optional) Amount of time your Lambda Function has to run in seconds. Defaults to 3."
+  type        = number
+  default     = 3
+}
+
+variable "memory_size" {
+  description = "(Optional) Amount of memory in MB your Lambda Function can use at runtime. Defaults to 128."
+  type        = number
+  default     = 128
+}
+
+variable "reserved_concurrent_executions" {
+  description = "(Optional) Amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1. See Managing Concurrency"
+  type        = number
+  default     = -1
+}
+
+variable "vpc_config" {
+  description = <<EOF
+  For network connectivity to AWS resources in a VPC, specify a list of security groups and subnets in the VPC.
+  When you connect a function to a VPC, it can only access resources and the internet through that VPC. See VPC Settings.
+
+  security_group_ids - (Required) List of security group IDs associated with the Lambda function.
+  subnet_ids_to_associate - (Required) List of subnet IDs associated with the Lambda function.
+  EOF
+  type = object({
+    security_group_ids      = list(string)
+    subnet_ids_to_associate = list(string)
+  })
+  default = {
+    security_group_ids      = []
+    subnet_ids_to_associate = []
+  }
+}
+
+variable "dead_letter_target_arn" {
+  description = "Dead letter queue configuration that specifies the queue or topic where Lambda sends asynchronous events when they fail processing."
+  type        = string
+  default     = null
+}
+
 variable "runtime" {
   description = "The runtime of the lambda function"
   type        = string
