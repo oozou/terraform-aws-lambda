@@ -240,8 +240,8 @@ resource "aws_lambda_function" "this" {
 resource "aws_cloudwatch_log_group" "this" {
   count = var.is_create_cloudwatch_log_group ? 1 : 0
 
-  name              = format("%s-lambda-log-group", local.name)
+  name              = format("/aws/lambda/%s-function", local.name)
   retention_in_days = var.retention_in_days
 
-  tags = merge(local.tags, { "Name" = format("%s-lambda-log-group", local.name) })
+  tags = merge(local.tags, { "Name" = format("/aws/lambda/%s-function", local.name) })
 }
