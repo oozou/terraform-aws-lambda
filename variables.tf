@@ -44,18 +44,12 @@ variable "file_globs" {
 variable "plaintext_params" {
   description = <<EOF
   Lambda@Edge does not support env vars, so it is a common pattern to exchange Env vars for values read from a config file.
+  ! PLAINTEXT
 
-  So instead of using env vars like:
-  `const someEnvValue = process.env.SOME_ENV`
-
-  you would have lookups from a config file:
   ```
   const config = JSON.parse(readFileSync('./config.json'))
   const someConfigValue = config.SomeKey
   ```
-
-  Compared to var.ssm_params, you should use this variable when you have non-secret things that you want very quick access
-  to during the execution of your lambda function.
   EOF
   type        = map(string)
   default     = {}
@@ -66,6 +60,19 @@ variable "config_file_name" {
   type        = string
   default     = "config.json"
 }
+/* -------------------------------------------------------------------------- */
+/*                            Resource Based Policy                           */
+/* -------------------------------------------------------------------------- */
+variable "lambda_permission_configuration" {
+  description = <<EOF
+  principal  - (Required) The principal who is getting this permission e.g., s3.amazonaws.com, an AWS account ID, or any valid AWS service principal such as events.amazonaws.com or sns.amazonaws.com.
+  source_arn - (Optional) When the principal is an AWS service, the ARN of the specific resource within that service to grant permission to. Without this, any resource from
+  source_account - (Optional) This parameter is used for S3 and SES. The AWS account ID (without a hyphen) of the source owner.
+  EOF
+  type        = any
+  default     = {}
+}
+
 /* -------------------------------------------------------------------------- */
 /*                                     IAM                                    */
 /* -------------------------------------------------------------------------- */
@@ -104,6 +111,54 @@ variable "bucket_name" {
 /* -------------------------------------------------------------------------- */
 /*                               Lambda Function                              */
 /* -------------------------------------------------------------------------- */
+variable "is_edge" {
+  description = "Whether lambda is lambda@Edge or not"
+  type        = bool
+  default     = false
+}
+
+variable "timeout" {
+  description = "(Optional) Amount of time your Lambda Function has to run in seconds. Defaults to 3."
+  type        = number
+  default     = 3
+}
+
+variable "memory_size" {
+  description = "(Optional) Amount of memory in MB your Lambda Function can use at runtime. Defaults to 128."
+  type        = number
+  default     = 128
+}
+
+variable "reserved_concurrent_executions" {
+  description = "(Optional) Amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1. See Managing Concurrency"
+  type        = number
+  default     = -1
+}
+
+variable "vpc_config" {
+  description = <<EOF
+  For network connectivity to AWS resources in a VPC, specify a list of security groups and subnets in the VPC.
+  When you connect a function to a VPC, it can only access resources and the internet through that VPC. See VPC Settings.
+
+  security_group_ids - (Required) List of security group IDs associated with the Lambda function.
+  subnet_ids_to_associate - (Required) List of subnet IDs associated with the Lambda function.
+  EOF
+  type = object({
+    security_group_ids      = list(string)
+    subnet_ids_to_associate = list(string)
+  })
+  default = {
+    security_group_ids      = []
+    subnet_ids_to_associate = []
+  }
+}
+
+variable "dead_letter_target_arn" {
+  description = "Dead letter queue configuration that specifies the queue or topic where Lambda sends asynchronous events when they fail processing."
+  type        = string
+  default     = null
+}
+
 variable "runtime" {
   description = "The runtime of the lambda function"
   type        = string
@@ -134,25 +189,11 @@ variable "retention_in_days" {
 variable "ssm_params" {
   description = <<EOF
   Lambda@Edge does not support env vars, so it is a common pattern to exchange Env vars for SSM params.
-
-  So instead of using env vars like:
-  `const someEnvValue = process.env.SOME_ENV`
+  ! SECRET
 
   you would have lookups in SSM, like:
   `const someEnvValue = await ssmClient.getParameter({ Name: 'SOME_SSM_PARAM_NAME', WithDecryption: true })`
 
-  These params should have names that are unique within an AWS account, so it is a good idea to use a common
-  prefix in front of the param names, such as:
-
-  ```
-  params = {
-    COMMON_PREFIX_REGION = "eu-west-1"
-    COMMON_PREFIX_NAME   = "Joeseph Schreibvogel"
-  }
-  ```
-
-  Compared to var.plaintext_params, you should use this variable when you have secret data that you don't want written in plaintext in a file
-  in your lambda .zip file. These params will need to be fetched via a Promise at runtime, so there may be small performance delays.
   EOF
   type        = map(string)
   default     = {}

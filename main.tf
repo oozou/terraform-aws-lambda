@@ -59,7 +59,7 @@ module "s3" {
 
   prefix      = var.prefix
   environment = var.environment
-  bucket_name = format("%s-lambda-bucket", var.name)
+  bucket_name = var.is_edge ? format("%s-lambda-edge-bucket", var.name) : format("%s-lambda-bucket", var.name)
 
   force_s3_destroy = true
 
@@ -79,6 +79,23 @@ resource "aws_s3_object" "this" {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                            Resource Based Policy                           */
+/* -------------------------------------------------------------------------- */
+resource "aws_lambda_permission" "allow_serivce" {
+  for_each = var.lambda_permission_configuration
+
+  statement_id   = format("AllowExecutionFrom-%s", each.key)
+  action         = "lambda:InvokeFunction"
+  function_name  = aws_lambda_function.this.function_name
+  principal      = lookup(each.value, "pricipal", null)
+  source_arn     = lookup(each.value, "source_arn", null)
+  source_account = lookup(each.value, "source_account", null)
+  # TODO Terraform aws says not support but doc support
+  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission#principal_org_id
+  # principal_org_id = lookup(each.value, "principal_org_id", "")
+}
+
+/* -------------------------------------------------------------------------- */
 /*                                  IAM Role                                  */
 /* -------------------------------------------------------------------------- */
 data "aws_iam_policy_document" "assume_role_policy_doc" {
@@ -93,8 +110,10 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
     principals {
       type = "Service"
 
-      identifiers = [
+      identifiers = var.is_edge ? [
         "edgelambda.amazonaws.com",
+        "lambda.amazonaws.com",
+        ] : [
         "lambda.amazonaws.com",
       ]
     }
@@ -115,6 +134,33 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
   }
 }
 
+data "aws_iam_policy_document" "lambda_access_vpc" {
+  count = var.is_create_lambda_role ? 1 : 0
+
+  # Allow to connect to VPC
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeVpcs"
+    ]
+    resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_policy" {
+  count = var.is_create_lambda_role ? 1 : 0
+
+  source_policy_documents = [
+    data.aws_iam_policy_document.lambda_logs_policy_doc[0].json,
+    data.aws_iam_policy_document.lambda_access_vpc[0].json
+  ]
+}
+
 resource "aws_iam_role" "this" {
   count = var.is_create_lambda_role ? 1 : 0
 
@@ -127,9 +173,9 @@ resource "aws_iam_role" "this" {
 resource "aws_iam_role_policy" "logs_role_policy" {
   count = var.is_create_lambda_role ? 1 : 0
 
-  name   = format("%s-lambda-at-edge-log-access-policy", local.name)
+  name   = var.is_edge ? format("%s-lambda-at-edge-log-access-policy", local.name) : format("%s-lambda-log-access-policy", local.name)
   role   = aws_iam_role.this[0].id
-  policy = data.aws_iam_policy_document.lambda_logs_policy_doc[0].json
+  policy = data.aws_iam_policy_document.lambda_policy[0].json
 }
 
 resource "aws_iam_role_policy_attachment" "this" {
@@ -201,10 +247,29 @@ resource "aws_lambda_function" "this" {
   s3_object_version = aws_s3_object.this.version_id
   source_code_hash  = filebase64sha256(data.archive_file.zip_file.output_path)
 
-  publish = true
+  # Specification
+  timeout                        = var.timeout
+  memory_size                    = var.memory_size
+  reserved_concurrent_executions = var.reserved_concurrent_executions
+
+  vpc_config {
+    security_group_ids = var.vpc_config.security_group_ids
+    subnet_ids         = var.vpc_config.subnet_ids_to_associate
+  }
+
+  dynamic "dead_letter_config" {
+    for_each = var.dead_letter_target_arn == null ? [] : [true]
+    content {
+      target_arn = var.dead_letter_target_arn
+    }
+  }
+
+  # Code Env
+  publish = true # Force public new version
   runtime = var.runtime
   handler = var.handler
-  role    = local.lambda_role_arn
+
+  role = local.lambda_role_arn
 
   lifecycle {
     ignore_changes = [
@@ -221,8 +286,8 @@ resource "aws_lambda_function" "this" {
 resource "aws_cloudwatch_log_group" "this" {
   count = var.is_create_cloudwatch_log_group ? 1 : 0
 
-  name              = format("%s-lambda-log-group", local.name)
+  name              = format("/aws/lambda/%s-function", local.name)
   retention_in_days = var.retention_in_days
 
-  tags = merge(local.tags, { "Name" = format("%s-lambda-log-group", local.name) })
+  tags = merge(local.tags, { "Name" = format("/aws/lambda/%s-function", local.name) })
 }
