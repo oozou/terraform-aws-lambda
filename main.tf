@@ -90,9 +90,9 @@ resource "aws_lambda_permission" "allow_serivce" {
   principal      = lookup(each.value, "pricipal", null)
   source_arn     = lookup(each.value, "source_arn", null)
   source_account = lookup(each.value, "source_account", null)
-  # principal_org_id = lookup(each.value, "principal_org_id", "")
-  # Terraform aws says not support by doc support
+  # TODO Terraform aws says not support but doc support
   # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission#principal_org_id
+  # principal_org_id = lookup(each.value, "principal_org_id", "")
 }
 
 /* -------------------------------------------------------------------------- */
