@@ -4,7 +4,10 @@
 locals {
   name = format("%s-%s-%s", var.prefix, var.environment, var.name)
 
-  lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
+  lambda_role_arn   = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
+  bucket_name       = var.is_upload_form_s3 ? var.bucket_name : var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
+  object_key        = var.is_upload_form_s3 ? data.aws_s3_object.this[0].key : aws_s3_object.this[0].id
+  object_version_id = var.is_upload_form_s3 ? data.aws_s3_object.this[0].version_id : aws_s3_object.this[0].version_id
 
   tags = merge(
     {
@@ -17,6 +20,8 @@ locals {
 /* ----------------------------- Raise Exception ---------------------------- */
 locals {
   raise_is_lambda_role_arn_empty = var.is_create_lambda_role == false && var.lambda_role_arn == "" ? file("Variable `lambda_role_arn` is required when `is_create_lambda_role` is false") : "pass"
+  raise_bucket_name_empty        = var.is_upload_form_s3 && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_upload_form_s3` is true") : "pass"
+  raise_file_name_empty          = var.is_upload_form_s3 && length(var.file_name) == 0 ? file("Variable `file_name` is required when `is_upload_form_s3` is true") : "pass"
 }
 
 /* -------------------------------------------------------------------------- */
@@ -24,8 +29,10 @@ locals {
 /* -------------------------------------------------------------------------- */
 /* -------------------------------- ZIP File -------------------------------- */
 data "archive_file" "zip_file" {
+  count = var.is_upload_form_s3 == false ? 1 : 0
+
   type        = "zip"
-  output_path = format("%s/%s.zip", var.local_file_dir, local.name)
+  output_path = format("%s/%s.zip", var.compressed_local_file_dir, local.name)
 
   dynamic "source" {
     for_each = distinct(flatten([for blob in var.file_globs : fileset(var.source_code_dir, blob)]))
@@ -53,7 +60,7 @@ data "archive_file" "zip_file" {
 }
 
 module "s3" {
-  count = var.is_create_lambda_bucket ? 1 : 0
+  count = var.is_create_lambda_bucket && var.is_upload_form_s3 == false ? 1 : 0
 
   source = "git@github.com:oozou/terraform-aws-s3.git?ref=v1.0.2"
 
@@ -69,11 +76,20 @@ module "s3" {
   tags = var.tags
 }
 
+data "aws_s3_object" "this" {
+  count = var.is_upload_form_s3 ? 1 : 0
+
+  bucket = local.bucket_name
+  key    = var.file_name
+}
+
 resource "aws_s3_object" "this" {
+  count = var.is_upload_form_s3 == false ? 1 : 0
+
   bucket = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
   key    = format("%s.zip", local.name)
-  source = data.archive_file.zip_file.output_path
-  etag   = data.archive_file.zip_file.output_md5
+  source = data.archive_file.zip_file[0].output_path
+  etag   = data.archive_file.zip_file[0].output_md5
 
   tags = merge(local.tags, { "Name" = format("%s.zip", local.name) })
 }
@@ -242,10 +258,9 @@ resource "aws_lambda_function" "this" {
   description   = format("Lambda function: %s", local.name)
 
   # Read the file from s3
-  s3_bucket         = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
-  s3_key            = aws_s3_object.this.id
-  s3_object_version = aws_s3_object.this.version_id
-  source_code_hash  = filebase64sha256(data.archive_file.zip_file.output_path)
+  s3_bucket         = local.bucket_name
+  s3_key            = local.object_key
+  s3_object_version = local.object_version_id
 
   # Specification
   timeout                        = var.timeout
@@ -259,6 +274,7 @@ resource "aws_lambda_function" "this" {
 
   dynamic "dead_letter_config" {
     for_each = var.dead_letter_target_arn == null ? [] : [true]
+
     content {
       target_arn = var.dead_letter_target_arn
     }

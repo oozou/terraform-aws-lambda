@@ -25,19 +25,22 @@ variable "tags" {
 /* -------------------------------------------------------------------------- */
 /*                                    Data                                    */
 /* -------------------------------------------------------------------------- */
-variable "local_file_dir" {
+variable "compressed_local_file_dir" {
   description = "A path to the directory to store plan time generated local files"
   type        = string
+  default     = ""
 }
 
 variable "source_code_dir" {
   description = "An absolute path to the directory containing the code to upload to lambda"
   type        = string
+  default     = ""
 }
 
 variable "file_globs" {
   description = "list of files or globs that you want included from the source_code_dir"
   type        = list(string)
+  default     = []
   # default     = ["index.js", "node_modules/**", "yarn.lock", "package.json"]
 }
 
@@ -97,6 +100,18 @@ variable "additional_lambda_role_policy_arns" {
 /* -------------------------------------------------------------------------- */
 /*                            S3 Lambda Source Code                           */
 /* -------------------------------------------------------------------------- */
+variable "is_upload_form_s3" {
+  description = "Whether to upload the source code from s3 or not"
+  type        = bool
+  default     = true
+}
+
+variable "file_name" {
+  description = "The compressed file name used to upload to lambda use when is_upload_form_s3 is true"
+  type        = string
+  default     = ""
+}
+
 variable "is_create_lambda_bucket" {
   description = "Whether to create lambda bucket or not"
   type        = bool
