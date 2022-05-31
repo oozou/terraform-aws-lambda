@@ -20,8 +20,12 @@ locals {
 /* ----------------------------- Raise Exception ---------------------------- */
 locals {
   raise_is_lambda_role_arn_empty = var.is_create_lambda_role == false && var.lambda_role_arn == "" ? file("Variable `lambda_role_arn` is required when `is_create_lambda_role` is false") : "pass"
-  raise_bucket_name_empty        = var.is_upload_form_s3 && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_upload_form_s3` is true") : "pass"
-  raise_file_name_empty          = var.is_upload_form_s3 && length(var.file_name) == 0 ? file("Variable `file_name` is required when `is_upload_form_s3` is true") : "pass"
+
+  raise_bucket_name_empty = var.is_upload_form_s3 && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_upload_form_s3` is true") : "pass"
+  raise_file_name_empty   = var.is_upload_form_s3 && length(var.file_name) == 0 ? file("Variable `file_name` is required when `is_upload_form_s3` is true") : "pass"
+
+  raise_compressed_local_file_dir_empty = var.is_upload_form_s3 == false && length(var.compressed_local_file_dir) == 0 ? file("Variable `compressed_local_file_dir` is required when `is_upload_form_s3` is false") : "pass"
+  raise_file_globs_empty                = var.is_upload_form_s3 == false && length(var.file_globs) == 0 ? file("Variable `file_globs` is required when `is_upload_form_s3` is false") : "pass"
 }
 
 /* -------------------------------------------------------------------------- */
