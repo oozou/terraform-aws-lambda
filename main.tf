@@ -1,13 +1,3 @@
-#
-# if lambd_edge:
-#   if is_create_lambda_bucket:
-#       _auto_create s3 bucket to keep versioning
-#   else:
-#       create the bucket name
-#       read bucket_name
-# else:
-#   # ignore is_create_lambda_bucket just upload from local
-
 /* -------------------------------------------------------------------------- */
 /*                                   Generic                                  */
 /* -------------------------------------------------------------------------- */
