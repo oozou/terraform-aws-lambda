@@ -100,11 +100,11 @@ variable "additional_lambda_role_policy_arns" {
 /* -------------------------------------------------------------------------- */
 /*                            S3 Lambda Source Code                           */
 /* -------------------------------------------------------------------------- */
-variable "is_upload_form_s3" {
-  description = "Whether to upload the source code from s3 or not"
-  type        = bool
-  default     = true
-}
+# variable "is_upload_form_s3" {
+#   description = "Whether to upload the source code from s3 or not"
+#   type        = bool
+#   default     = true
+# }
 
 variable "file_name" {
   description = "The compressed file name used to upload to lambda use when is_upload_form_s3 is true"

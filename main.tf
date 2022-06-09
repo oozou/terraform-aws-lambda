@@ -4,10 +4,11 @@
 locals {
   name = format("%s-%s-%s", var.prefix, var.environment, var.name)
 
-  lambda_role_arn   = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
-  bucket_name       = var.is_upload_form_s3 ? var.bucket_name : var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
-  object_key        = var.is_upload_form_s3 ? data.aws_s3_object.this[0].key : aws_s3_object.this[0].id
-  object_version_id = var.is_upload_form_s3 ? data.aws_s3_object.this[0].version_id : aws_s3_object.this[0].version_id
+  lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
+
+  bucket_name       = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
+  object_key        = var.is_edge ? aws_s3_object.this[0].id : data.archive_file.this[0].key
+  object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : data.archive_file.this[0].version_id
 
   tags = merge(
     {
@@ -21,11 +22,10 @@ locals {
 locals {
   raise_is_lambda_role_arn_empty = var.is_create_lambda_role == false && var.lambda_role_arn == "" ? file("Variable `lambda_role_arn` is required when `is_create_lambda_role` is false") : "pass"
 
-  raise_bucket_name_empty = var.is_upload_form_s3 && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_upload_form_s3` is true") : "pass"
-  raise_file_name_empty   = var.is_upload_form_s3 && length(var.file_name) == 0 ? file("Variable `file_name` is required when `is_upload_form_s3` is true") : "pass"
+  raise_bucket_name_empty = var.is_create_lambda_bucket == false && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_create_lambda_bucket` is false") : "pass"
 
-  raise_compressed_local_file_dir_empty = var.is_upload_form_s3 == false && length(var.compressed_local_file_dir) == 0 ? file("Variable `compressed_local_file_dir` is required when `is_upload_form_s3` is false") : "pass"
-  raise_file_globs_empty                = var.is_upload_form_s3 == false && length(var.file_globs) == 0 ? file("Variable `file_globs` is required when `is_upload_form_s3` is false") : "pass"
+  raise_compressed_local_file_dir_empty = length(var.compressed_local_file_dir) == 0 ? file("Variable `compressed_local_file_dir` is required") : "pass"
+  raise_file_globs_empty                = length(var.file_globs) == 0 ? file("Variable `file_globs` is required") : "pass"
 }
 
 /* -------------------------------------------------------------------------- */
@@ -33,8 +33,6 @@ locals {
 /* -------------------------------------------------------------------------- */
 /* -------------------------------- ZIP File -------------------------------- */
 data "archive_file" "zip_file" {
-  count = var.is_upload_form_s3 == false ? 1 : 0
-
   type        = "zip"
   output_path = format("%s/%s.zip", var.compressed_local_file_dir, local.name)
 
@@ -64,7 +62,7 @@ data "archive_file" "zip_file" {
 }
 
 module "s3" {
-  count = var.is_create_lambda_bucket && var.is_upload_form_s3 == false ? 1 : 0
+  count = var.is_create_lambda_bucket && var.is_edge ? 1 : 0
 
   source = "git@github.com:oozou/terraform-aws-s3.git?ref=v1.0.2"
 
@@ -80,20 +78,13 @@ module "s3" {
   tags = var.tags
 }
 
-data "aws_s3_object" "this" {
-  count = var.is_upload_form_s3 ? 1 : 0
-
-  bucket = local.bucket_name
-  key    = var.file_name
-}
-
 resource "aws_s3_object" "this" {
-  count = var.is_upload_form_s3 == false ? 1 : 0
+  count = var.is_create_lambda_bucket && var.is_edge ? 1 : 0
 
-  bucket = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
+  bucket = element(module.s3[*].bucket_name, 0)
   key    = format("%s.zip", local.name)
-  source = data.archive_file.zip_file[0].output_path
-  etag   = data.archive_file.zip_file[0].output_md5
+  source = data.archive_file.zip_file.output_path
+  etag   = data.archive_file.zip_file.output_md5
 
   tags = merge(local.tags, { "Name" = format("%s.zip", local.name) })
 }
@@ -261,10 +252,13 @@ resource "aws_lambda_function" "this" {
   function_name = format("%s-function", local.name)
   description   = format("Lambda function: %s", local.name)
 
-  # Read the file from s3
+  # Read source code from s3
   s3_bucket         = local.bucket_name
   s3_key            = local.object_key
   s3_object_version = local.object_version_id
+
+  # Read source code from local
+  source_code_hash = filebase64sha256(data.archive_file.zip_file.output_path)
 
   # Specification
   timeout                        = var.timeout
