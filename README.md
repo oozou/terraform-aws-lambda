@@ -2,26 +2,22 @@
 
 ## Usage
 
+### Source code form bucket
+
 ```terraform
-module "lambda" {
-  source = "../"
+module "lambda_from_bucket" {
+  source = "<source_code>"
 
   prefix      = "oozou"
   environment = "test"
-  name        = "resource"
+  name        = "bakara"
 
-  is_edge = false # Default is "false." If you want to publish to the edge, don't forget to change AWS's provider to Virginia.
+  is_edge = false # Defautl is `fault`, If you want to publish to the edge don't forget to override aws's provider to virgina
 
-  # File to read from
-  source_code_dir = "./src"
-  file_globs      = ["index.js"]
-
-  # File to saved to
-  local_file_dir = "./outputs"
-
-  # S3 to upload source code to
-  is_create_lambda_bucket = true # Default is `false`; plz use false, if not 1 lambda: 1 bucket
-  bucket_name             = ""   # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
+  # Source code configuration. If is_upload_form_s3 is `true`
+  is_upload_form_s3 = true # Default is `true`
+  bucket_name       = "oozou-test-loal-lambda-bucket-557291035693-48fexi"
+  file_name         = "oozou-test-loal.zip"
 
   # Lambda Env
   runtime = "nodejs12.x"
@@ -29,14 +25,14 @@ module "lambda" {
 
   # Lambda Specification
   timeout                        = 3   # Default is `3` seconds
-  memory_size                    = 128 # Default is `128` MB. as memory size increases, performance improves.
+  memory_size                    = 128 # Default is `128` MB, the more mem size increase, the performance is better
   reserved_concurrent_executions = -1
   ## Optional to connect Lambda to VPC
   vpc_config = {
     security_group_ids      = ["sg-028f637312eea735e"]
     subnet_ids_to_associate = ["subnet-0b853f8c85796d72d", "subnet-07c068b4b51262793", "subnet-0362f68c559ef7716"]
   }
-  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # Default is `null`; to send failed processing to target
+  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # To send failed processing to target, Default is `""`
 
   # IAM
   is_create_lambda_role              = true                                                 # Default is `true`
@@ -46,17 +42,86 @@ module "lambda" {
   # Resource policy
   lambda_permission_configuration = {
     lambda_on_my_account = {
-      pricipal       = "apigateway.amazonaws.com"
-      source_arn     = "arn:aws:execute-api:ap-southeast-1:557291035693:lk36vflbha/*/*/"
+      pricipal   = "apigateway.amazonaws.com"
+      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035693:lk36vflbha/*/*/"
     }
     lambda_on_my_another_account_wrong = {
       pricipal       = "apigateway.amazonaws.com"
       source_arn     = "arn:aws:execute-api:ap-southeast-1:562563527952:q6pwa6wgr6/*/*/"
-      source_account = "557291035693"  # Optional just to restrict the permission
+      source_account = "557291035693" # Optional just to restrict the permission
     }
     lambda_on_my_another_account_correct = {
       pricipal   = "apigateway.amazonaws.com"
-      source_arn = "arn:aws:execute-api:ap-southeast-1:562563527952:q6pwa6wgr6/*/*/"
+      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035693:wpj4t3scmb/*/*/"
+    }
+  }
+
+  # Logging
+  is_create_cloudwatch_log_group = true # Default is `true`
+  retention_in_days              = 30   # Default is `30`
+
+  # Secret for lambda function
+  ssm_params = {}
+
+  tags = { "Workspace" = "xxx-yyy-zzz" }
+}
+
+```
+
+### Source code from local
+
+```terraform
+module "lambda_from_local" {
+  source = "<source_code>"
+
+  prefix      = "oozou"
+  environment = "test"
+  name        = "local"
+
+  is_edge = false # Defautl is `fault`, If you want to publish to the edge don't forget to override aws's provider to virgina
+
+  # Source code configuration. If is_upload_form_s3 is `false`
+  is_upload_form_s3         = false # Default is `true`
+  source_code_dir           = "./src"
+  file_globs                = ["index.js"]
+  compressed_local_file_dir = "./outputs"
+  is_create_lambda_bucket   = true # Default is `false`; plz use false, if not 1 lambda: 1 bucket
+  bucket_name               = ""   # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
+
+  # Lambda Env
+  runtime = "nodejs12.x"
+  handler = "index.handler" # Default `"index.handler"`
+
+  # Lambda Specification
+  timeout                        = 3   # Default is `3` seconds
+  memory_size                    = 128 # Default is `128` MB, the more mem size increase, the performance is better
+  reserved_concurrent_executions = -1
+  ## Optional to connect Lambda to VPC
+  vpc_config = {
+    security_group_ids      = ["sg-028f637312eea735e"]
+    subnet_ids_to_associate = ["subnet-0b853f8c85796d72d", "subnet-07c068b4b51262793", "subnet-0362f68c559ef7716"]
+  }
+  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # To send failed processing to target, Default is `""`
+
+  # IAM
+  is_create_lambda_role              = true                                                 # Default is `true`
+  lambda_role_arn                    = ""                                                   # If `is_create_lambda_role` is `false`
+  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess", ] # The policies that you want to attach to IAM Role created by only this module
+
+  # Resource policy
+  lambda_permission_configuration = {
+    lambda_on_my_account = {
+      pricipal   = "apigateway.amazonaws.com"
+      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035693:lk36vflbha/*/*/"
+    }
+    lambda_on_my_another_account_wrong = {
+      pricipal       = "apigateway.amazonaws.com"
+      source_arn     = "arn:aws:execute-api:ap-southeast-1:562563527952:q6pwa6wgr6/*/*/"
+      source_account = "557291035693" # Optional just to restrict the permission
+    }
+    lambda_on_my_another_account_correct = {
+      pricipal   = "apigateway.amazonaws.com"
+      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035693:wpj4t3scmb/*/*/"
     }
   }
 
@@ -70,9 +135,8 @@ module "lambda" {
     "DATABASE_HOST"     = "www.google.com"
   }
 
-  tags = { "Workspace" = "xxx-yyy-zzz" }
+  tags = { "Workspace" = "pc" }
 }
-
 ```
 
 <!-- BEGIN_TF_DOCS -->
@@ -117,6 +181,7 @@ module "lambda" {
 | [aws_iam_policy_document.lambda_logs_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)           | data source |
 | [aws_iam_policy_document.lambda_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)                    | data source |
 | [aws_iam_policy_document.secret_access_policy_doc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document)         | data source |
+| [aws_s3_object.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_object)                                                 | data source |
 
 ## Inputs
 
@@ -124,18 +189,20 @@ module "lambda" {
 |--------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|:--------:|
 | <a name="input_additional_lambda_role_policy_arns"></a> [additional\_lambda\_role\_policy\_arns](#input\_additional\_lambda\_role\_policy\_arns) | List of policies ARNs to attach to the lambda                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `list(string)`                                                                                                          | `[]`                                                                                |    no    |
 | <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name)                                                                            | Name of the bucket to put the file in. Alternatively, an S3 access point ARN can be specified.                                                                                                                                                                                                                                                                                                                                                                                                                             | `string`                                                                                                                | `""`                                                                                |    no    |
+| <a name="input_compressed_local_file_dir"></a> [compressed\_local\_file\_dir](#input\_compressed\_local\_file\_dir)                              | A path to the directory to store plan time generated local files                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `string`                                                                                                                | `""`                                                                                |    no    |
 | <a name="input_config_file_name"></a> [config\_file\_name](#input\_config\_file\_name)                                                           | The name of the file var.plaintext\_params will be written to as json                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `string`                                                                                                                | `"config.json"`                                                                     |    no    |
 | <a name="input_dead_letter_target_arn"></a> [dead\_letter\_target\_arn](#input\_dead\_letter\_target\_arn)                                       | Dead letter queue configuration that specifies the queue or topic where Lambda sends asynchronous events when they fail processing.                                                                                                                                                                                                                                                                                                                                                                                        | `string`                                                                                                                | `null`                                                                              |    no    |
 | <a name="input_environment"></a> [environment](#input\_environment)                                                                              | Environment Variable used as a prefix                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `string`                                                                                                                | n/a                                                                                 |   yes    |
-| <a name="input_file_globs"></a> [file\_globs](#input\_file\_globs)                                                                               | list of files or globs that you want included from the source\_code\_dir                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `list(string)`                                                                                                          | n/a                                                                                 |   yes    |
+| <a name="input_file_globs"></a> [file\_globs](#input\_file\_globs)                                                                               | list of files or globs that you want included from the source\_code\_dir                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `list(string)`                                                                                                          | `[]`                                                                                |    no    |
+| <a name="input_file_name"></a> [file\_name](#input\_file\_name)                                                                                  | The compressed file name used to upload to lambda use when is\_upload\_form\_s3 is true                                                                                                                                                                                                                                                                                                                                                                                                                                    | `string`                                                                                                                | `""`                                                                                |    no    |
 | <a name="input_handler"></a> [handler](#input\_handler)                                                                                          | Function entrypoint in your code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `string`                                                                                                                | `"index.handler"`                                                                   |    no    |
 | <a name="input_is_create_cloudwatch_log_group"></a> [is\_create\_cloudwatch\_log\_group](#input\_is\_create\_cloudwatch\_log\_group)             | Whether to create cloudwatch log group or not                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `bool`                                                                                                                  | `true`                                                                              |    no    |
 | <a name="input_is_create_lambda_bucket"></a> [is\_create\_lambda\_bucket](#input\_is\_create\_lambda\_bucket)                                    | Whether to create lambda bucket or not                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `bool`                                                                                                                  | `false`                                                                             |    no    |
 | <a name="input_is_create_lambda_role"></a> [is\_create\_lambda\_role](#input\_is\_create\_lambda\_role)                                          | Whether to create lamda role or not                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `bool`                                                                                                                  | `true`                                                                              |    no    |
 | <a name="input_is_edge"></a> [is\_edge](#input\_is\_edge)                                                                                        | Whether lambda is lambda@Edge or not                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `bool`                                                                                                                  | `false`                                                                             |    no    |
+| <a name="input_is_upload_form_s3"></a> [is\_upload\_form\_s3](#input\_is\_upload\_form\_s3)                                                      | Whether to upload the source code from s3 or not                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `bool`                                                                                                                  | `true`                                                                              |    no    |
 | <a name="input_lambda_permission_configuration"></a> [lambda\_permission\_configuration](#input\_lambda\_permission\_configuration)              | principal  - (Required) The principal who is getting this permission e.g., s3.amazonaws.com, an AWS account ID, or any valid AWS service principal such as events.amazonaws.com or sns.amazonaws.com.<br>  source\_arn - (Optional) When the principal is an AWS service, the ARN of the specific resource within that service to grant permission to. Without this, any resource from<br>  source\_account - (Optional) This parameter is used for S3 and SES. The AWS account ID (without a hyphen) of the source owner. | `any`                                                                                                                   | `{}`                                                                                |    no    |
 | <a name="input_lambda_role_arn"></a> [lambda\_role\_arn](#input\_lambda\_role\_arn)                                                              | The arn of role that already created by something to asso with lambda                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `string`                                                                                                                | `""`                                                                                |    no    |
-| <a name="input_local_file_dir"></a> [local\_file\_dir](#input\_local\_file\_dir)                                                                 | A path to the directory to store plan time generated local files                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `string`                                                                                                                | n/a                                                                                 |   yes    |
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size)                                                                            | (Optional) Amount of memory in MB your Lambda Function can use at runtime. Defaults to 128.                                                                                                                                                                                                                                                                                                                                                                                                                                | `number`                                                                                                                | `128`                                                                               |    no    |
 | <a name="input_name"></a> [name](#input\_name)                                                                                                   | Name of the ECS cluster to create                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `string`                                                                                                                | n/a                                                                                 |   yes    |
 | <a name="input_plaintext_params"></a> [plaintext\_params](#input\_plaintext\_params)                                                             | Lambda@Edge does not support env vars, so it is a common pattern to exchange Env vars for values read from a config file.<br>  ! PLAINTEXT<pre>const config = JSON.parse(readFileSync('./config.json'))<br>  const someConfigValue = config.SomeKey</pre>                                                                                                                                                                                                                                                                  | `map(string)`                                                                                                           | `{}`                                                                                |    no    |
@@ -143,7 +210,7 @@ module "lambda" {
 | <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions)                 | (Optional) Amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1. See Managing Concurrency                                                                                                                                                                                                                                                                         | `number`                                                                                                                | `-1`                                                                                |    no    |
 | <a name="input_retention_in_days"></a> [retention\_in\_days](#input\_retention\_in\_days)                                                        | Retention day for cloudwatch log group                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `number`                                                                                                                | `30`                                                                                |    no    |
 | <a name="input_runtime"></a> [runtime](#input\_runtime)                                                                                          | The runtime of the lambda function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `string`                                                                                                                | n/a                                                                                 |   yes    |
-| <a name="input_source_code_dir"></a> [source\_code\_dir](#input\_source\_code\_dir)                                                              | An absolute path to the directory containing the code to upload to lambda                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `string`                                                                                                                | n/a                                                                                 |   yes    |
+| <a name="input_source_code_dir"></a> [source\_code\_dir](#input\_source\_code\_dir)                                                              | An absolute path to the directory containing the code to upload to lambda                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `string`                                                                                                                | `""`                                                                                |    no    |
 | <a name="input_ssm_params"></a> [ssm\_params](#input\_ssm\_params)                                                                               | Lambda@Edge does not support env vars, so it is a common pattern to exchange Env vars for SSM params.<br>  ! SECRET<br><br>  you would have lookups in SSM, like:<br>  `const someEnvValue = await ssmClient.getParameter({ Name: 'SOME_SSM_PARAM_NAME', WithDecryption: true })`                                                                                                                                                                                                                                          | `map(string)`                                                                                                           | `{}`                                                                                |    no    |
 | <a name="input_tags"></a> [tags](#input\_tags)                                                                                                   | Custom tags which can be passed on to the AWS resources. They should be key value pairs having distinct keys                                                                                                                                                                                                                                                                                                                                                                                                               | `map(any)`                                                                                                              | `{}`                                                                                |    no    |
 | <a name="input_timeout"></a> [timeout](#input\_timeout)                                                                                          | (Optional) Amount of time your Lambda Function has to run in seconds. Defaults to 3.                                                                                                                                                                                                                                                                                                                                                                                                                                       | `number`                                                                                                                | `3`                                                                                 |    no    |
