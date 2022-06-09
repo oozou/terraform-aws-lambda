@@ -16,6 +16,7 @@ locals {
 
   lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
 
+  file_name         = var.is_edge ? null : data.archive_file.this.output_path
   bucket_name       = var.is_edge ? var.is_create_lambda_bucket ? module.s3[0].bucket_name : var.bucket_name : null
   object_key        = var.is_edge ? aws_s3_object.this[0].id : null
   object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : null
@@ -269,6 +270,7 @@ resource "aws_lambda_function" "this" {
   s3_object_version = local.object_version_id
 
   # Read source code from local
+  filename         = local.file_name
   source_code_hash = filebase64sha256(data.archive_file.this.output_path)
 
   # Specification
@@ -295,12 +297,6 @@ resource "aws_lambda_function" "this" {
   handler = var.handler
 
   role = local.lambda_role_arn
-
-  lifecycle {
-    ignore_changes = [
-      last_modified,
-    ]
-  }
 
   tags = merge(local.tags, { "Name" = format("%s-function", local.name) })
 }
