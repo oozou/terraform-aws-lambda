@@ -170,7 +170,6 @@ variable "runtime" {
 variable "handler" {
   description = "Function entrypoint in your code."
   type        = string
-  default     = "index.handler"
 }
 
 /* -------------------------------------------------------------------------- */

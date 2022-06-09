@@ -1,9 +1,10 @@
 #
 # if lambd_edge:
 #   if is_create_lambda_bucket:
-#       _must_specific the bucket_name
-#   else:
 #       _auto_create s3 bucket to keep versioning
+#   else:
+#       create the bucket name
+#       read bucket_name
 # else:
 #   # ignore is_create_lambda_bucket just upload from local
 
@@ -15,7 +16,7 @@ locals {
 
   lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
 
-  bucket_name       = var.is_create_lambda_bucket ? try(module.s3[0].bucket_name, "") : var.bucket_name
+  bucket_name       = var.is_edge ? var.is_create_lambda_bucket ? module.s3[0].bucket_name : var.bucket_name : null
   object_key        = var.is_edge ? aws_s3_object.this[0].id : null
   object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : null
 
@@ -31,16 +32,14 @@ locals {
 locals {
   raise_is_lambda_role_arn_empty = var.is_create_lambda_role == false && var.lambda_role_arn == "" ? file("Variable `lambda_role_arn` is required when `is_create_lambda_role` is false") : "pass"
 
-  raise_bucket_name_empty = var.is_create_lambda_bucket == false && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_create_lambda_bucket` is false") : "pass"
-
-  raise_compressed_local_file_dir_empty = length(var.compressed_local_file_dir) == 0 ? file("Variable `compressed_local_file_dir` is required") : "pass"
-  raise_file_globs_empty                = length(var.file_globs) == 0 ? file("Variable `file_globs` is required") : "pass"
+  raise_bucket_name_empty    = var.is_edge && var.is_create_lambda_bucket == false && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_create_lambda_bucket` is false") : "pass"
+  raise_local_file_dir_empty = length(var.compressed_local_file_dir) == 0 ? file("Variable `compressed_local_file_dir` is required") : "pass"
+  raise_file_globs_empty     = length(var.file_globs) == 0 ? file("Variable `file_globs` is required") : "pass"
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                     S3                                     */
+/*                                  Zip File                                  */
 /* -------------------------------------------------------------------------- */
-/* -------------------------------- ZIP File -------------------------------- */
 data "archive_file" "this" {
   type        = "zip"
   output_path = format("%s/%s.zip", var.compressed_local_file_dir, local.name)
@@ -70,8 +69,11 @@ data "archive_file" "this" {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                     S3                                     */
+/* -------------------------------------------------------------------------- */
 module "s3" {
-  count = var.is_create_lambda_bucket && var.is_edge ? 1 : 0
+  count = var.is_edge && var.is_create_lambda_bucket ? 1 : 0
 
   source = "git@github.com:oozou/terraform-aws-s3.git?ref=v1.0.2"
 
@@ -88,7 +90,7 @@ module "s3" {
 }
 
 resource "aws_s3_object" "this" {
-  count = var.is_create_lambda_bucket && var.is_edge ? 1 : 0
+  count = var.is_edge && var.is_create_lambda_bucket ? 1 : 0
 
   bucket = element(module.s3[*].bucket_name, 0)
   key    = format("%s.zip", local.name)
