@@ -1,3 +1,12 @@
+#
+# if lambd_edge:
+#   if is_create_lambda_bucket:
+#       _must_specific the bucket_name
+#   else:
+#       _auto_create s3 bucket to keep versioning
+# else:
+#   # ignore is_create_lambda_bucket just upload from local
+
 /* -------------------------------------------------------------------------- */
 /*                                   Generic                                  */
 /* -------------------------------------------------------------------------- */
@@ -6,7 +15,7 @@ locals {
 
   lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
 
-  bucket_name       = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
+  bucket_name       = var.is_create_lambda_bucket ? try(module.s3[0].bucket_name, "") : var.bucket_name
   object_key        = var.is_edge ? aws_s3_object.this[0].id : null
   object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : null
 
