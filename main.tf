@@ -7,8 +7,8 @@ locals {
   lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
 
   bucket_name       = var.is_create_lambda_bucket ? element(module.s3[*].bucket_name, 0) : var.bucket_name
-  object_key        = var.is_edge ? aws_s3_object.this[0].id : data.archive_file.this[0].key
-  object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : data.archive_file.this[0].version_id
+  object_key        = var.is_edge ? aws_s3_object.this[0].id : null
+  object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : null
 
   tags = merge(
     {
@@ -32,7 +32,7 @@ locals {
 /*                                     S3                                     */
 /* -------------------------------------------------------------------------- */
 /* -------------------------------- ZIP File -------------------------------- */
-data "archive_file" "zip_file" {
+data "archive_file" "this" {
   type        = "zip"
   output_path = format("%s/%s.zip", var.compressed_local_file_dir, local.name)
 
@@ -83,8 +83,8 @@ resource "aws_s3_object" "this" {
 
   bucket = element(module.s3[*].bucket_name, 0)
   key    = format("%s.zip", local.name)
-  source = data.archive_file.zip_file.output_path
-  etag   = data.archive_file.zip_file.output_md5
+  source = data.archive_file.this.output_path
+  etag   = data.archive_file.this.output_md5
 
   tags = merge(local.tags, { "Name" = format("%s.zip", local.name) })
 }
@@ -258,7 +258,7 @@ resource "aws_lambda_function" "this" {
   s3_object_version = local.object_version_id
 
   # Read source code from local
-  source_code_hash = filebase64sha256(data.archive_file.zip_file.output_path)
+  source_code_hash = filebase64sha256(data.archive_file.this.output_path)
 
   # Specification
   timeout                        = var.timeout
