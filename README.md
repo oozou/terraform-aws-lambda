@@ -4,8 +4,7 @@
 
 ```terraform
 module "lambda" {
-  # source = "git@github.com:oozou/terraform-aws-lambda.git?ref=refactor/lambda-source-code"
-  source = "../terraform-aws-lambda-edge"
+  source = "git@github.com:oozou/terraform-aws-lambda.git?ref=v1.0.2"
 
   prefix      = "oozou"
   environment = "dev"
