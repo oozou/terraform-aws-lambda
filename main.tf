@@ -212,7 +212,7 @@ resource "aws_ssm_parameter" "params" {
   type = "SecureString"
   tier = length(each.value) > 4096 ? "Advanced" : "Standard"
 
-  tags = var.tags
+  tags = local.tags
 }
 
 data "aws_iam_policy_document" "secret_access_policy_doc" {
