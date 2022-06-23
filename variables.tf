@@ -162,6 +162,16 @@ variable "dead_letter_target_arn" {
   default     = null
 }
 
+variable "tracing_mode" {
+  description = "Tracing mode of the Lambda Function. Valid value can be either PassThrough or Active."
+  type        = string
+  default     = null
+  validation {
+    condition     = contains(["PassThrough", "Active"], var.tracing_mode)
+    error_message = "Valid values for account_mode are PassThrough and Active."
+  }
+}
+
 variable "runtime" {
   description = "The runtime of the lambda function"
   type        = string

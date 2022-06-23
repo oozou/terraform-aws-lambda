@@ -268,6 +268,13 @@ resource "aws_lambda_function" "this" {
   memory_size                    = var.memory_size
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
+  # Code Env
+  publish = true # Force public new version
+  runtime = var.runtime
+  handler = var.handler
+
+  role = local.lambda_role_arn
+
   vpc_config {
     security_group_ids = var.vpc_config.security_group_ids
     subnet_ids         = var.vpc_config.subnet_ids_to_associate
@@ -281,12 +288,12 @@ resource "aws_lambda_function" "this" {
     }
   }
 
-  # Code Env
-  publish = true # Force public new version
-  runtime = var.runtime
-  handler = var.handler
-
-  role = local.lambda_role_arn
+  dynamic "tracing_config" {
+    for_each = var.tracing_mode == null ? [] : [true]
+    content {
+      mode = var.tracing_mode
+    }
+  }
 
   tags = merge(local.tags, { "Name" = format("%s-function", local.name) })
 }
