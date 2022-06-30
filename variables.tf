@@ -194,12 +194,17 @@ variable "is_create_cloudwatch_log_group" {
   default     = true
 }
 
-variable "retention_in_days" {
+variable "cloudwatch_log_retention_in_days" {
   description = "Retention day for cloudwatch log group"
   type        = number
-  default     = 30
+  default     = 90
 }
 
+variable "cloudwatch_log_kms_key_id" {
+  description = "The ARN for the KMS encryption key."
+  type        = string
+  default     = null
+}
 
 variable "ssm_params" {
   description = <<EOF
