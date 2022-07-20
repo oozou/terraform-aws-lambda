@@ -1,4 +1,8 @@
-# CHANGE
+# Change Log
+
+All notable changes to this module will be documented in this file.
+
+## [1.0.3] - 2022-07-20
 
 - Remove upload code from s3
   - S3 source code is used for versioning
