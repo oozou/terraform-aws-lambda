@@ -1,9 +1,9 @@
 module "lambda" {
   source = "../../"
 
-  prefix      = "oozou"
-  environment = "devops"
-  name        = "demo"
+  prefix      = var.prefix
+  environment = var.environment
+  name        = var.name
 
   source_code_dir           = "./src"
   file_globs                = ["index.js"]
@@ -41,5 +41,5 @@ module "lambda" {
     desired        = 1
   }
 
-  tags = { "Workspace" = "900-oozou-sandbox-terraform" }
+  tags = var.custom_tags
 }

@@ -1,9 +1,9 @@
 module "lambda" {
   source = "../../"
 
-  prefix      = "oozou"
-  environment = "devops"
-  name        = "demo"
+  prefix      = var.prefix
+  environment = var.environment
+  name        = var.name
 
   is_edge = false # Defautl is `false`, If you want to publish to the edge don't forget to override aws's provider to virgina
 
@@ -72,5 +72,5 @@ module "lambda" {
     desired        = 1
   }
 
-  tags = { "Workspace" = "900-oozou-sandbox-terraform" }
+  tags = var.custom_tags
 }
