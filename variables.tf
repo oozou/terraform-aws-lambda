@@ -1,8 +1,8 @@
 /* -------------------------------------------------------------------------- */
 /*                                   Generic                                  */
 /* -------------------------------------------------------------------------- */
-variable "prefix" {
-  description = "The prefix name of customer to be displayed in AWS console and resource"
+variable "name" {
+  description = "Name of the ECS cluster to create"
   type        = string
 }
 
@@ -11,8 +11,8 @@ variable "environment" {
   type        = string
 }
 
-variable "name" {
-  description = "Name of the ECS cluster to create"
+variable "prefix" {
+  description = "The prefix name of customer to be displayed in AWS console and resource"
   type        = string
 }
 
@@ -66,7 +66,7 @@ variable "config_file_name" {
 /* -------------------------------------------------------------------------- */
 /*                            Resource Based Policy                           */
 /* -------------------------------------------------------------------------- */
-variable "lambda_permission_configurations" {
+variable "lambda_permission_configuration" {
   description = <<EOF
   principal  - (Required) The principal who is getting this permission e.g., s3.amazonaws.com, an AWS account ID, or any valid AWS service principal such as events.amazonaws.com or sns.amazonaws.com.
   source_arn - (Optional) When the principal is an AWS service, the ARN of the specific resource within that service to grant permission to. Without this, any resource from
@@ -92,14 +92,26 @@ variable "lambda_role_arn" {
 }
 
 variable "additional_lambda_role_policy_arns" {
-  description = "Map of policies ARNs to attach to the lambda"
-  type        = map(string)
-  default     = {}
+  description = "List of policies ARNs to attach to the lambda"
+  type        = list(string)
+  default     = []
 }
 
 /* -------------------------------------------------------------------------- */
 /*                            S3 Lambda Source Code                           */
 /* -------------------------------------------------------------------------- */
+variable "is_upload_form_s3" {
+  description = "Whether to upload the source code from s3 or not"
+  type        = bool
+  default     = true
+}
+
+variable "file_name" {
+  description = "The compressed file name used to upload to lambda use when is_upload_form_s3 is true"
+  type        = string
+  default     = ""
+}
+
 variable "is_create_lambda_bucket" {
   description = "Whether to create lambda bucket or not"
   type        = bool
@@ -162,16 +174,6 @@ variable "dead_letter_target_arn" {
   default     = null
 }
 
-variable "tracing_mode" {
-  description = "Tracing mode of the Lambda Function. Valid value can be either PassThrough or Active."
-  type        = string
-  default     = "PassThrough"
-  validation {
-    condition     = contains(["PassThrough", "Active"], var.tracing_mode)
-    error_message = "Valid values for account_mode are PassThrough and Active."
-  }
-}
-
 variable "runtime" {
   description = "The runtime of the lambda function"
   type        = string
@@ -180,6 +182,7 @@ variable "runtime" {
 variable "handler" {
   description = "Function entrypoint in your code."
   type        = string
+  default     = "index.handler"
 }
 
 /* -------------------------------------------------------------------------- */
