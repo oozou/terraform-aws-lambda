@@ -44,4 +44,3 @@ All notable changes to this module will be documented in this file.
 - Create an IAM policy document granting the ability to read and retrieve SSM parameter values.
 - Develop a policy based on the SSM policy paper
 - Custom policies to attach to this role
-
