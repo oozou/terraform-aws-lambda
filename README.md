@@ -4,7 +4,7 @@
 
 ```terraform
 module "lambda" {
-  source = "git@github.com:oozou/terraform-aws-lambda.git?ref=v1.0.2"
+  source = "git@github.com:oozou/terraform-aws-lambda.git?ref=v1.1.0"
 
   prefix      = "oozou"
   environment = "dev"
