@@ -1,39 +1,76 @@
 module "lambda" {
   source = "../../"
 
-  prefix      = var.generic_info.prefix
-  environment = var.generic_info.environment
-  name        = var.generic_info.name
+  prefix      = "oozou"
+  environment = "devops"
+  name        = "demo"
 
-  is_edge = var.is_edge
+  is_edge = false # Defautl is `false`, If you want to publish to the edge don't forget to override aws's provider to virgina
 
-  is_create_lambda_bucket = var.is_create_lambda_bucket
-  bucket_name             = ""
+  # If is_edge is `false`, ignore this config
+  is_create_lambda_bucket = true # Default is `false`; plz use false, if not 1 lambda: 1 bucket
+  bucket_name             = ""   # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
 
+  # Source code
   source_code_dir           = "./src"
-  file_globs                = ["main.py"]
+  file_globs                = ["index.js"]
   compressed_local_file_dir = "./outputs"
 
+  # Lambda Env
   runtime = "nodejs12.x"
   handler = "index.handler"
 
-  timeout                        = var.timeout
-  memory_size                    = var.memory_size
+  # Lambda Specification
+  timeout                        = 3
+  memory_size                    = 128
   reserved_concurrent_executions = -1
-  vpc_config                     = var.vpc_config
-  dead_letter_target_arn         = var.dead_letter_target_arn
 
-  is_create_lambda_role              = var.is_create_lambda_role
-  lambda_role_arn                    = ""
-  additional_lambda_role_policy_arns = var.additional_lambda_role_policy_arns
+  # Optional to connect Lambda to VPC
+  vpc_config = {
+    security_group_ids      = ["sg-028f637312eea735e"]
+    subnet_ids_to_associate = ["subnet-0b853f8c85796d72d", "subnet-07c068b4b51262793", "subnet-0362f68c559ef7716"]
+  }
+  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # To send failed processing to target, Default is `""`
 
-  lambda_permission_configurations = var.lambda_permission_configurations
+  # IAM
+  is_create_lambda_role = true # Default is `true`
+  lambda_role_arn       = ""   # If `is_create_lambda_role` is `false`
+  # The policies that you want to attach to IAM Role created by only this module                                                   # If `is_create_lambda_role` is `false`
+  additional_lambda_role_policy_arns = {
+    allow_lambda_to_read_s3 = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+  }
 
-  is_create_cloudwatch_log_group   = var.is_create_cloudwatch_log_group
-  cloudwatch_log_retention_in_days = var.cloudwatch_log_retention_in_days
+  # Resource policy
+  lambda_permission_configurations = {
+    lambda_on_my_account = {
+      pricipal   = "apigateway.amazonaws.com"
+      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035112:lk36vflbha/*/*/"
+    }
+    lambda_on_my_another_account_wrong = {
+      pricipal       = "apigateway.amazonaws.com"
+      source_arn     = "arn:aws:execute-api:ap-southeast-1:224563527112:q6pwa6wgr6/*/*/"
+      source_account = "557291035112"
+    }
+    lambda_on_my_another_account_correct = {
+      pricipal   = "apigateway.amazonaws.com"
+      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035112:wpj4t3scmb/*/*/"
+    }
+  }
 
-  ssm_params       = var.ssm_params
-  plaintext_params = var.plaintext_params
+  # Logging
+  is_create_cloudwatch_log_group   = true # Default is `true`
+  cloudwatch_log_retention_in_days = 90   # Default is `90`
 
-  tags = var.generic_info.custom_tags
+  # Env
+  ssm_params = {}
+  plaintext_params = {
+    region         = "ap-southeast-1"
+    cluster_name   = "oozou-dev-test-schedule-cluster"
+    nodegroup_name = "oozou-dev-test-schedule-custom-nodegroup"
+    min            = 1,
+    max            = 1,
+    desired        = 1
+  }
+
+  tags = { "Workspace" = "900-oozou-sandbox-terraform" }
 }
