@@ -37,9 +37,9 @@ module "lambda" {
   dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # To send failed processing to target, Default is `""`
 
   # IAM
-  is_create_lambda_role              = true                                                 # Default is `true`
-  lambda_role_arn                    = ""
-  # The policies that you want to attach to IAM Role created by only this module                                                   # If `is_create_lambda_role` is `false`
+  is_create_lambda_role              = true  # Default is `true`
+  lambda_role_arn                    = ""    # If `is_create_lambda_role` is `false`
+  # The policies that you want to attach to IAM Role created by only this module
   additional_lambda_role_policy_arns = {
     allow_lambda_to_read_s3 = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
   }
