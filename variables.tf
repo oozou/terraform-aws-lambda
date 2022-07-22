@@ -66,7 +66,7 @@ variable "config_file_name" {
 /* -------------------------------------------------------------------------- */
 /*                            Resource Based Policy                           */
 /* -------------------------------------------------------------------------- */
-variable "lambda_permission_configuration" {
+variable "lambda_permission_configurations" {
   description = <<EOF
   principal  - (Required) The principal who is getting this permission e.g., s3.amazonaws.com, an AWS account ID, or any valid AWS service principal such as events.amazonaws.com or sns.amazonaws.com.
   source_arn - (Optional) When the principal is an AWS service, the ARN of the specific resource within that service to grant permission to. Without this, any resource from
