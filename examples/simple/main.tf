@@ -30,6 +30,7 @@ module "lambda" {
       source_arn = "arn:aws:execute-api:ap-southeast-1:557291035112:wpj4t3scmb/*/*/"
     }
   }
+
   ssm_params = {}
   plaintext_params = {
     region         = "ap-southeast-1"
