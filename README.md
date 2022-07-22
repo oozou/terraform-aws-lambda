@@ -62,8 +62,8 @@ module "lambda" {
   }
 
   # Logging
-  is_create_cloudwatch_log_group = true # Default is `true`
-  retention_in_days              = 30   # Default is `30`
+  is_create_cloudwatch_log_group   = true # Default is `true`
+  cloudwatch_log_retention_in_days = 30   # Default is `90`
 
   # Env
   ssm_params = {}

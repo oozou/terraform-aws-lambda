@@ -95,7 +95,7 @@ resource "aws_s3_object" "this" {
 /*                            Resource Based Policy                           */
 /* -------------------------------------------------------------------------- */
 resource "aws_lambda_permission" "allow_serivce" {
-  for_each = var.lambda_permission_configuration
+  for_each = var.lambda_permission_configurations
 
   statement_id   = format("AllowExecutionFrom-%s", each.key)
   action         = "lambda:InvokeFunction"
@@ -192,7 +192,7 @@ resource "aws_iam_role_policy" "logs_role_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "this" {
-  for_each = var.is_create_lambda_role ? var.additional_lambda_role_policy_arn : {}
+  for_each = var.is_create_lambda_role ? var.additional_lambda_role_policy_arns : {}
 
   role       = aws_iam_role.this[0].name
   policy_arn = each.value
