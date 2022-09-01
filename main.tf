@@ -66,7 +66,8 @@ data "archive_file" "this" {
 module "s3" {
   count = var.is_edge && var.is_create_lambda_bucket ? 1 : 0
 
-  source = "git@github.com:oozou/terraform-aws-s3.git?ref=v1.0.4"
+  source  = "oozou/s3/aws"
+  version = "1.1.2"
 
   prefix      = var.prefix
   environment = var.environment
