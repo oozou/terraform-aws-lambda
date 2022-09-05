@@ -87,20 +87,20 @@ module "lambda" {
 |---------------------------------------------------------------------------|----------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
 | <a name="requirement_archive"></a> [archive](#requirement\_archive)       | 2.2.0    |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws)                   | >= 4.00  |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws)                   | >= 4.0.0 |
 
 ## Providers
 
 | Name                                                          | Version |
 |---------------------------------------------------------------|---------|
 | <a name="provider_archive"></a> [archive](#provider\_archive) | 2.2.0   |
-| <a name="provider_aws"></a> [aws](#provider\_aws)             | 4.23.0  |
+| <a name="provider_aws"></a> [aws](#provider\_aws)             | 4.29.0  |
 
 ## Modules
 
-| Name                                       | Source                                    | Version |
-|--------------------------------------------|-------------------------------------------|---------|
-| <a name="module_s3"></a> [s3](#module\_s3) | git@github.com:oozou/terraform-aws-s3.git | v1.0.4  |
+| Name                                       | Source       | Version |
+|--------------------------------------------|--------------|---------|
+| <a name="module_s3"></a> [s3](#module\_s3) | oozou/s3/aws | 1.1.2   |
 
 ## Resources
 
