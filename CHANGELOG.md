@@ -2,6 +2,12 @@
 
 All notable changes to this module will be documented in this file.
 
+## [v1.1.2] - 2022-10-21
+
+### Changed
+
+- Update s3 module from version `v1.1.2` to public registry version `v1.1.3`
+
 ## [v1.1.1] - 2022-09-05
 
 ### Changed
