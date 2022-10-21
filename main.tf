@@ -67,7 +67,7 @@ module "s3" {
   count = var.is_edge && var.is_create_lambda_bucket ? 1 : 0
 
   source  = "oozou/s3/aws"
-  version = "1.1.2"
+  version = "1.1.3"
 
   prefix      = var.prefix
   environment = var.environment

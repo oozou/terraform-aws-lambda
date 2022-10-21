@@ -94,13 +94,13 @@ module "lambda" {
 | Name                                                          | Version |
 |---------------------------------------------------------------|---------|
 | <a name="provider_archive"></a> [archive](#provider\_archive) | 2.2.0   |
-| <a name="provider_aws"></a> [aws](#provider\_aws)             | 4.29.0  |
+| <a name="provider_aws"></a> [aws](#provider\_aws)             | 4.36.0  |
 
 ## Modules
 
 | Name                                       | Source       | Version |
 |--------------------------------------------|--------------|---------|
-| <a name="module_s3"></a> [s3](#module\_s3) | oozou/s3/aws | 1.1.2   |
+| <a name="module_s3"></a> [s3](#module\_s3) | oozou/s3/aws | 1.1.3   |
 
 ## Resources
 
