@@ -92,9 +92,9 @@ variable "lambda_role_arn" {
 }
 
 variable "additional_lambda_role_policy_arns" {
-  description = "Map of policies ARNs to attach to the lambda"
-  type        = map(string)
-  default     = {}
+  description = "List of policies ARNs to attach to the lambda's created role"
+  type        = list(string)
+  default     = []
 }
 
 /* -------------------------------------------------------------------------- */

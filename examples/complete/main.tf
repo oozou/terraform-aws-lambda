@@ -36,9 +36,7 @@ module "lambda" {
   is_create_lambda_role = true # Default is `true`
   lambda_role_arn       = ""   # If `is_create_lambda_role` is `false`
   # The policies that you want to attach to IAM Role created by only this module                                                   # If `is_create_lambda_role` is `false`
-  additional_lambda_role_policy_arns = {
-    allow_lambda_to_read_s3 = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-  }
+  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]
 
   # Resource policy
   lambda_permission_configurations = {

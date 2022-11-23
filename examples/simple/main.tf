@@ -12,9 +12,7 @@ module "lambda" {
   runtime = "nodejs12.x"
   handler = "index.handler"
 
-  additional_lambda_role_policy_arns = {
-    allow_lambda_to_read_s3 = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-  }
+  additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]
   lambda_permission_configurations = {
     lambda_on_my_account = {
       pricipal   = "apigateway.amazonaws.com"

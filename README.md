@@ -1,84 +1,4 @@
-# terraform-aws-lambda-edge
-
-## Usage
-
-```terraform
-module "lambda" {
-  source = "git@github.com:oozou/terraform-aws-lambda.git?ref=v1.1.0"
-
-  prefix      = "oozou"
-  environment = "dev"
-  name        = "demo"
-
-  is_edge = true # Defautl is `fault`, If you want to publish to the edge don't forget to override aws's provider to virgina
-
-  # If is_edge is `false`, ignore this config
-  is_create_lambda_bucket = true # Default is `false`; plz use false, if not 1 lambda: 1 bucket
-  bucket_name             = ""   # If `is_create_lambda_bucket` is `false`; specified this, default is `""`
-
-  # Source code
-  source_code_dir           = "./src"
-  file_globs                = ["main.py"]
-  compressed_local_file_dir = "./outputs"
-
-  # Lambda Env
-  runtime = "python3.9"
-  handler = "main.lambda_handler"
-
-  # Lambda Specification
-  timeout                        = 3   # Default is `3` seconds
-  memory_size                    = 128 # Default is `128` MB, the more mem size increase, the performance is better
-  reserved_concurrent_executions = -1
-  # Optional to connect Lambda to VPC
-  vpc_config = {
-    security_group_ids      = ["sg-028f637312eea735e"]
-    subnet_ids_to_associate = ["subnet-0b853f8c85796d72d", "subnet-07c068b4b51262793", "subnet-0362f68c559ef7716"]
-  }
-  dead_letter_target_arn = "arn:aws:sns:ap-southeast-1:557291035693:demo" # To send failed processing to target, Default is `""`
-
-  # IAM
-  is_create_lambda_role              = true  # Default is `true`
-  lambda_role_arn                    = ""    # If `is_create_lambda_role` is `false`
-  # The policies that you want to attach to IAM Role created by only this module
-  additional_lambda_role_policy_arns = {
-    allow_lambda_to_read_s3 = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
-  }
-
-  # Resource policy
-  lambda_permission_configurations = {
-    lambda_on_my_account = {
-      pricipal   = "apigateway.amazonaws.com"
-      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035693:lk36vflbha/*/*/"
-    }
-    lambda_on_my_another_account_wrong = {
-      pricipal       = "apigateway.amazonaws.com"
-      source_arn     = "arn:aws:execute-api:ap-southeast-1:562563527952:q6pwa6wgr6/*/*/"
-      source_account = "557291035693" # Optional just to restrict the permission
-    }
-    lambda_on_my_another_account_correct = {
-      pricipal   = "apigateway.amazonaws.com"
-      source_arn = "arn:aws:execute-api:ap-southeast-1:557291035693:wpj4t3scmb/*/*/"
-    }
-  }
-
-  # Logging
-  is_create_cloudwatch_log_group   = true # Default is `true`
-  cloudwatch_log_retention_in_days = 30   # Default is `90`
-
-  # Env
-  ssm_params = {}
-  plaintext_params = {
-    region         = "ap-southeast-1"
-    cluster_name   = "oozou-dev-test-schedule-cluster"
-    nodegroup_name = "oozou-dev-test-schedule-custom-nodegroup"
-    min            = 1,
-    max            = 1,
-    desired        = 1
-  }
-
-  tags = var.generics_info["custom_tags"]
-}
-```
+# terraform-aws-lambda
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -127,7 +47,7 @@ module "lambda" {
 
 | Name                                                                                                                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Type                                                                                                                    | Default                                                                             | Required |
 |--------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|:--------:|
-| <a name="input_additional_lambda_role_policy_arns"></a> [additional\_lambda\_role\_policy\_arns](#input\_additional\_lambda\_role\_policy\_arns) | Map of policies ARNs to attach to the lambda                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `map(string)`                                                                                                           | `{}`                                                                                |    no    |
+| <a name="input_additional_lambda_role_policy_arns"></a> [additional\_lambda\_role\_policy\_arns](#input\_additional\_lambda\_role\_policy\_arns) | Map of policies ARNs to attach to the lambda                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `list(string)`                                                                                                          | `[]`                                                                                |    no    |
 | <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name)                                                                            | Name of the bucket to put the file in. Alternatively, an S3 access point ARN can be specified.                                                                                                                                                                                                                                                                                                                                                                                                                             | `string`                                                                                                                | `""`                                                                                |    no    |
 | <a name="input_cloudwatch_log_kms_key_id"></a> [cloudwatch\_log\_kms\_key\_id](#input\_cloudwatch\_log\_kms\_key\_id)                            | The ARN for the KMS encryption key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `string`                                                                                                                | `null`                                                                              |    no    |
 | <a name="input_cloudwatch_log_retention_in_days"></a> [cloudwatch\_log\_retention\_in\_days](#input\_cloudwatch\_log\_retention\_in\_days)       | Retention day for cloudwatch log group                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `number`                                                                                                                | `90`                                                                                |    no    |
