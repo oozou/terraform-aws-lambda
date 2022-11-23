@@ -193,10 +193,10 @@ resource "aws_iam_role_policy" "logs_role_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "this" {
-  for_each = var.is_create_lambda_role ? var.additional_lambda_role_policy_arns : {}
+  count = var.is_create_lambda_role ? length(var.additional_lambda_role_policy_arns) : 0
 
   role       = aws_iam_role.this[0].name
-  policy_arn = each.value
+  policy_arn = var.additional_lambda_role_policy_arns[count.index]
 }
 
 /* -------------------------------------------------------------------------- */

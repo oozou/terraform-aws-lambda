@@ -2,6 +2,18 @@
 
 All notable changes to this module will be documented in this file.
 
+## [v1.1.3] - 2022-11-23
+
+### Added
+
+### Changed
+
+- Update example usage for `examples/complete/*` and `examples/simple/*`
+- Update meta-argument of resource `aws_iam_role_policy_attachment.this` from `for_each` to `count`
+- Update variable `additional_lambda_role_policy_arns` from type `map(string)` to `list(string)`
+
+### Removed
+
 ## [v1.1.2] - 2022-10-21
 
 ### Changed
