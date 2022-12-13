@@ -274,6 +274,13 @@ resource "aws_lambda_function" "this" {
   runtime = var.runtime
   handler = var.handler
 
+  dynamic "environment" {
+    for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
+    content {
+      variables = var.environment_variables
+    }
+  }
+
   role = local.lambda_role_arn
 
   vpc_config {
