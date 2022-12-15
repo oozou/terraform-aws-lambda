@@ -101,7 +101,7 @@ resource "aws_lambda_permission" "allow_serivce" {
   statement_id   = format("AllowExecutionFrom-%s", each.key)
   action         = "lambda:InvokeFunction"
   function_name  = aws_lambda_function.this.function_name
-  principal      = lookup(each.value, "pricipal", null)
+  principal      = lookup(each.value, "principal", null)
   source_arn     = lookup(each.value, "source_arn", null)
   source_account = lookup(each.value, "source_account", null)
   # TODO Terraform aws says not support but doc support
