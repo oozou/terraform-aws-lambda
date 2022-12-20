@@ -15,16 +15,16 @@ module "lambda" {
   additional_lambda_role_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]
   lambda_permission_configurations = {
     lambda_on_my_account = {
-      pricipal   = "apigateway.amazonaws.com"
+      principal  = "apigateway.amazonaws.com"
       source_arn = "arn:aws:execute-api:ap-southeast-1:557291035112:lk36vflbha/*/*/"
     }
     lambda_on_my_another_account_wrong = {
-      pricipal       = "apigateway.amazonaws.com"
+      principal      = "apigateway.amazonaws.com"
       source_arn     = "arn:aws:execute-api:ap-southeast-1:224563527112:q6pwa6wgr6/*/*/"
       source_account = "557291035112"
     }
     lambda_on_my_another_account_correct = {
-      pricipal   = "apigateway.amazonaws.com"
+      principal  = "apigateway.amazonaws.com"
       source_arn = "arn:aws:execute-api:ap-southeast-1:557291035112:wpj4t3scmb/*/*/"
     }
   }

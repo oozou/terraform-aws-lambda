@@ -101,7 +101,7 @@ resource "aws_lambda_permission" "allow_serivce" {
   statement_id   = format("AllowExecutionFrom-%s", each.key)
   action         = "lambda:InvokeFunction"
   function_name  = aws_lambda_function.this.function_name
-  principal      = lookup(each.value, "pricipal", null)
+  principal      = lookup(each.value, "principal", null)
   source_arn     = lookup(each.value, "source_arn", null)
   source_account = lookup(each.value, "source_account", null)
   # TODO Terraform aws says not support but doc support
@@ -273,6 +273,13 @@ resource "aws_lambda_function" "this" {
   publish = true # Force public new version
   runtime = var.runtime
   handler = var.handler
+
+  dynamic "environment" {
+    for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
+    content {
+      variables = var.environment_variables
+    }
+  }
 
   role = local.lambda_role_arn
 

@@ -182,6 +182,12 @@ variable "handler" {
   type        = string
 }
 
+variable "environment_variables" {
+  description = "A map that defines environment variables for the Lambda Function."
+  type        = map(string)
+  default     = {}
+}
+
 /* -------------------------------------------------------------------------- */
 /*                            CloudWatch Log Group                            */
 /* -------------------------------------------------------------------------- */

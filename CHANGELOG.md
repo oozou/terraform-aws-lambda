@@ -2,6 +2,17 @@
 
 All notable changes to this module will be documented in this file.
 
+## [v1.1.4] - 2022-12-15
+
+### Added
+- var `environment_variables`
+- add dynamic `environment` in resource `aws_lambda_function.this`
+- add access_key_rotate example
+
+### Changed
+
+- fix typo, change from `pricipal` to `principal` in resource `aws_lambda_permission.allow_serivce`
+
 ## [v1.1.3] - 2022-11-23
 
 ### Added
