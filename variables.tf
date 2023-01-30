@@ -120,6 +120,19 @@ variable "is_edge" {
   default     = false
 }
 
+variable "is_s3_upload" {
+  description = "Whether upload the source code from s3 bucket"
+  type        = bool
+  default     = false
+}
+
+variable "is_publish" {
+  description = "Whether publish the lambda function"
+  type        = bool
+  default     = true
+}
+
+
 variable "timeout" {
   description = "(Optional) Amount of time your Lambda Function has to run in seconds. Defaults to 3."
   type        = number

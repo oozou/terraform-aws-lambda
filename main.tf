@@ -6,10 +6,10 @@ locals {
 
   lambda_role_arn = var.is_create_lambda_role ? aws_iam_role.this[0].arn : var.lambda_role_arn
 
-  file_name         = var.is_edge ? null : data.archive_file.this.output_path
-  bucket_name       = var.is_edge ? var.is_create_lambda_bucket ? module.s3[0].bucket_name : var.bucket_name : null
-  object_key        = var.is_edge ? aws_s3_object.this[0].id : null
-  object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : null
+  file_name         = var.is_s3_upload ? null : data.archive_file.this.output_path
+  bucket_name       = var.is_s3_upload ? var.is_create_lambda_bucket ? module.s3[0].bucket_name : var.bucket_name : null
+  object_key        = var.is_s3_upload ? aws_s3_object.this[0].id : null
+  object_version_id = var.is_s3_upload ? aws_s3_object.this[0].version_id : null
 
   tags = merge(
     {
@@ -23,7 +23,7 @@ locals {
 locals {
   raise_is_lambda_role_arn_empty = var.is_create_lambda_role == false && var.lambda_role_arn == "" ? file("Variable `lambda_role_arn` is required when `is_create_lambda_role` is false") : "pass"
 
-  raise_bucket_name_empty    = var.is_edge && var.is_create_lambda_bucket == false && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_create_lambda_bucket` is false") : "pass"
+  raise_bucket_name_empty    = var.is_s3_upload && var.is_create_lambda_bucket == false && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_create_lambda_bucket` is false") : "pass"
   raise_local_file_dir_empty = length(var.compressed_local_file_dir) == 0 ? file("Variable `compressed_local_file_dir` is required") : "pass"
   raise_file_globs_empty     = length(var.file_globs) == 0 ? file("Variable `file_globs` is required") : "pass"
 }
@@ -64,7 +64,7 @@ data "archive_file" "this" {
 /*                                     S3                                     */
 /* -------------------------------------------------------------------------- */
 module "s3" {
-  count = var.is_edge && var.is_create_lambda_bucket ? 1 : 0
+  count = var.is_s3_upload && var.is_create_lambda_bucket ? 1 : 0
 
   source  = "oozou/s3/aws"
   version = "1.1.3"
@@ -82,7 +82,7 @@ module "s3" {
 }
 
 resource "aws_s3_object" "this" {
-  count = var.is_edge && var.is_create_lambda_bucket ? 1 : 0
+  count = var.is_s3_upload && var.is_create_lambda_bucket ? 1 : 0
 
   bucket = element(module.s3[*].bucket_name, 0)
   key    = format("%s.zip", local.name)
@@ -270,7 +270,7 @@ resource "aws_lambda_function" "this" {
   reserved_concurrent_executions = var.reserved_concurrent_executions
 
   # Code Env
-  publish = true # Force public new version
+  publish = var.is_publish # Force public new version
   runtime = var.runtime
   handler = var.handler
 
