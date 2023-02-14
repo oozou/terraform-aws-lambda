@@ -194,18 +194,6 @@ variable "environment_variables" {
   default     = {}
 }
 
-variable "is_override_source_code_path" {
-  description = "(optional) describe your variable"
-  type        = bool
-  default     = false
-}
-
-variable "override_source_code_path" {
-  description = "(optional) describe your variable"
-  type        = string
-  default     = ""
-}
-
 /* -------------------------------------------------------------------------- */
 /*                            CloudWatch Log Group                            */
 /* -------------------------------------------------------------------------- */
