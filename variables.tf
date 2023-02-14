@@ -138,6 +138,12 @@ variable "reserved_concurrent_executions" {
   default     = -1
 }
 
+variable "layer_arns" {
+  description = "(Optional) List of Lambda Layer Version ARNs (maximum of 5) to attach to your Lambda Function."
+  type        = list(string)
+  default     = []
+}
+
 variable "vpc_config" {
   description = <<EOF
   For network connectivity to AWS resources in a VPC, specify a list of security groups and subnets in the VPC.
@@ -186,6 +192,18 @@ variable "environment_variables" {
   description = "A map that defines environment variables for the Lambda Function."
   type        = map(string)
   default     = {}
+}
+
+variable "is_override_source_code_path" {
+  description = "(optional) describe your variable"
+  type        = bool
+  default     = false
+}
+
+variable "override_source_code_path" {
+  description = "(optional) describe your variable"
+  type        = string
+  default     = ""
 }
 
 /* -------------------------------------------------------------------------- */

@@ -31,6 +31,7 @@ locals {
 /* -------------------------------------------------------------------------- */
 /*                                  Zip File                                  */
 /* -------------------------------------------------------------------------- */
+# TODO Remove plaintext_params
 data "archive_file" "this" {
   type        = "zip"
   output_path = format("%s/%s.zip", var.compressed_local_file_dir, local.name)
@@ -202,6 +203,7 @@ resource "aws_iam_role_policy_attachment" "this" {
 /* -------------------------------------------------------------------------- */
 /*                                     SSM                                    */
 /* -------------------------------------------------------------------------- */
+# TODO; migrate to SSM
 resource "aws_ssm_parameter" "params" {
   for_each = var.ssm_params
 
@@ -268,6 +270,7 @@ resource "aws_lambda_function" "this" {
   timeout                        = var.timeout
   memory_size                    = var.memory_size
   reserved_concurrent_executions = var.reserved_concurrent_executions
+  layers                         = var.layer_arns
 
   # Code Env
   publish = true # Force public new version
