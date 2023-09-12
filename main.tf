@@ -16,7 +16,8 @@ locals {
   tags = merge(
     {
       "Environment" = var.environment,
-      "Terraform"   = "true"
+      "Terraform"   = "true",
+      "Module"      = "terraform-aws-lambda"
     },
     var.tags
   )
