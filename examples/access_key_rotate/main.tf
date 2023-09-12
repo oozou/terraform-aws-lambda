@@ -1,5 +1,5 @@
 locals {
-  name              = format("%s-%s-%s", "oozou", "test", "app")
+  name = format("%s-%s-%s", "oozou", "test", "app")
 }
 
 data "aws_caller_identity" "this" {}
@@ -31,7 +31,7 @@ module "sns" {
 
   prefix       = "oozou"
   environment  = "test"
-  name         = format("%s-accesskey-rotate", "app") 
+  name         = format("%s-accesskey-rotate", "app")
   display_name = "Alerting Center"
 
   sns_permission_configuration = {
@@ -71,14 +71,14 @@ resource "aws_iam_policy" "sns_publish_policy" {
         Action = [
           "sns:Publish",
         ]
-        Effect   = "Allow"
-        "Resource": module.sns.sns_topic_arn
+        Effect = "Allow"
+        "Resource" : module.sns.sns_topic_arn
       },
     ]
   })
 }
 
-resource "aws_iam_policy" "iam_updateKey_policy" {
+resource "aws_iam_policy" "iam_updatekey_policy" {
   name = format("%s-iam-updatekey-access", local.name)
   path = "/"
 
@@ -92,8 +92,8 @@ resource "aws_iam_policy" "iam_updateKey_policy" {
           "iam:ListAccessKeys",
           "iam:DeleteAccessKey",
         ]
-        Effect   = "Allow"
-        "Resource": aws_iam_user.s3_presigned_user.arn
+        Effect = "Allow"
+        "Resource" : aws_iam_user.s3_presigned_user.arn
       },
     ]
   })
@@ -108,11 +108,11 @@ resource "aws_iam_policy" "secretsmanager_updatesecret_policy" {
     Statement = [
       {
         Action = [
-            "secretsmanager:GetSecretValue",
-            "secretsmanager:PutSecretValue"
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:PutSecretValue"
         ]
-        Effect   = "Allow"
-          "Resource": aws_secretsmanager_secret.accesskey.arn
+        Effect = "Allow"
+        "Resource" : aws_secretsmanager_secret.accesskey.arn
       },
     ]
   })
@@ -136,22 +136,22 @@ module "lambda_accesskey_rotate" {
   runtime = "python3.9"
   handler = "access_key_rotate.handler"
   environment_variables = {
-    iam_username    = aws_iam_user.s3_presigned_user.name
-    secret_name      = aws_secretsmanager_secret.accesskey.name
-    sns_topic_arn   = module.sns.sns_topic_arn
+    iam_username  = aws_iam_user.s3_presigned_user.name
+    secret_name   = aws_secretsmanager_secret.accesskey.name
+    sns_topic_arn = module.sns.sns_topic_arn
   }
 
   # IAM
   additional_lambda_role_policy_arns = [
     aws_iam_policy.sns_publish_policy.arn,
     aws_iam_policy.secretsmanager_updatesecret_policy.arn,
-    aws_iam_policy.iam_updateKey_policy.arn
+    aws_iam_policy.iam_updatekey_policy.arn
   ]
 
   # Resource policy
   lambda_permission_configurations = {
     allow_trigger_from_eventbridge = {
-      principal   = "secretsmanager.amazonaws.com"
+      principal = "secretsmanager.amazonaws.com"
     }
   }
 
@@ -183,16 +183,16 @@ module "secret_kms_key" {
 }
 
 resource "aws_secretsmanager_secret" "accesskey" {
-  name                = format("%s/accesskey", local.name)
-  description = "access key secret with rotation"
-  kms_key_id  = module.secret_kms_key.key_arn
+  name                    = format("%s/accesskey", local.name)
+  description             = "access key secret with rotation"
+  kms_key_id              = module.secret_kms_key.key_arn
   recovery_window_in_days = 0
 
 }
 
 resource "aws_secretsmanager_secret_rotation" "accesskey" {
   secret_id           = aws_secretsmanager_secret.accesskey.id
-  rotation_lambda_arn = module.lambda_accesskey_rotate.function_arn 
+  rotation_lambda_arn = module.lambda_accesskey_rotate.function_arn
   rotation_rules {
     automatically_after_days = 7
   }
@@ -212,4 +212,3 @@ resource "aws_iam_user" "s3_presigned_user" {
 
   tags = merge({}, { "Name" = "s3_presigned_user" })
 }
-

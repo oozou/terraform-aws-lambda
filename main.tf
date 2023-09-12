@@ -11,10 +11,13 @@ locals {
   object_key        = var.is_edge ? aws_s3_object.this[0].id : null
   object_version_id = var.is_edge ? aws_s3_object.this[0].version_id : null
 
+  cloudwatch_log_group_kms_key_arn = var.cloudwatch_log_group_kms_key_arn != null ? var.cloudwatch_log_group_kms_key_arn : var.is_create_default_kms ? module.cloudwatch_log_group_kms[0].key_arn : null
+
   tags = merge(
     {
       "Environment" = var.environment,
-      "Terraform"   = "true"
+      "Terraform"   = "true",
+      "Module"      = "terraform-aws-lambda"
     },
     var.tags
   )
@@ -29,8 +32,15 @@ locals {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                                    Data                                    */
+/* -------------------------------------------------------------------------- */
+data "aws_caller_identity" "this" {}
+data "aws_region" "this" {}
+
+/* -------------------------------------------------------------------------- */
 /*                                  Zip File                                  */
 /* -------------------------------------------------------------------------- */
+# TODO Remove plaintext_params
 data "archive_file" "this" {
   type        = "zip"
   output_path = format("%s/%s.zip", var.compressed_local_file_dir, local.name)
@@ -202,6 +212,7 @@ resource "aws_iam_role_policy_attachment" "this" {
 /* -------------------------------------------------------------------------- */
 /*                                     SSM                                    */
 /* -------------------------------------------------------------------------- */
+# TODO; migrate to SSM
 resource "aws_ssm_parameter" "params" {
   for_each = var.ssm_params
 
@@ -268,6 +279,7 @@ resource "aws_lambda_function" "this" {
   timeout                        = var.timeout
   memory_size                    = var.memory_size
   reserved_concurrent_executions = var.reserved_concurrent_executions
+  layers                         = var.layer_arns
 
   # Code Env
   publish = true # Force public new version
@@ -309,12 +321,53 @@ resource "aws_lambda_function" "this" {
 /* -------------------------------------------------------------------------- */
 /*                            CloudWatch Log Group                            */
 /* -------------------------------------------------------------------------- */
+data "aws_iam_policy_document" "cloudwatch_log_group_kms_policy" {
+  statement {
+    sid = "AllowCloudWatchToDoCryptography"
+    actions = [
+      "kms:Encrypt*",
+      "kms:Decrypt*",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:Describe*"
+    ]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = tolist([format("logs.%s.amazonaws.com", data.aws_region.this.name)])
+    }
+
+    condition {
+      test     = "ArnEquals"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = [format("arn:aws:logs:%s:%s:log-group:%s", data.aws_region.this.name, data.aws_caller_identity.this.account_id, format("/aws/lambda/%s-function", local.name))]
+    }
+  }
+}
+
+module "cloudwatch_log_group_kms" {
+  count   = var.is_create_cloudwatch_log_group && var.is_create_default_kms && var.cloudwatch_log_group_kms_key_arn == null ? 1 : 0
+  source  = "oozou/kms-key/aws"
+  version = "1.0.0"
+
+  prefix               = var.prefix
+  environment          = var.environment
+  name                 = format("%s-function-log-group", var.name)
+  key_type             = "service"
+  append_random_suffix = true
+  description          = format("Secure Secrets Manager's service secrets for service %s", local.name)
+  additional_policies  = [data.aws_iam_policy_document.cloudwatch_log_group_kms_policy.json]
+
+  tags = merge(local.tags, { "Name" : format("%s-function-log-group", var.name) })
+}
+
 resource "aws_cloudwatch_log_group" "this" {
   count = var.is_create_cloudwatch_log_group ? 1 : 0
 
   name              = format("/aws/lambda/%s-function", local.name)
   retention_in_days = var.cloudwatch_log_retention_in_days
-  kms_key_id        = var.cloudwatch_log_kms_key_id
+  kms_key_id        = local.cloudwatch_log_group_kms_key_arn
 
   tags = merge(local.tags, { "Name" = format("/aws/lambda/%s-function", local.name) })
 }
