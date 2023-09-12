@@ -2,6 +2,23 @@
 
 All notable changes to this module will be documented in this file.
 
+## [v1.2.0] - 2023-09-12
+
+### Added
+
+- Data general source `data.aws_caller_identity.this`, `data.aws_region.this`
+- Encryption to cloudwatch log group (external kms, built-in kms)
+  - Data `data.aws_iam_policy_document.cloudwatch_log_group_kms_policy`
+  - Module `module.cloudwatch_log_group_kms (v1.0.0)`
+  - Variable `var.is_create_default_kms`, `var.cloudwatch_log_group_kms_key_arn`
+- Add support lambda layer
+  - Variable `var.layer_arns`
+
+### Changed
+
+- Constrain version for archive provider to `>= 2.0.0` from `2.2.0`
+- Add default tagging with module name
+
 ## [v1.1.4] - 2022-12-15
 
 ### Added
