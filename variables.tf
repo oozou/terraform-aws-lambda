@@ -25,6 +25,12 @@ variable "tags" {
 /* -------------------------------------------------------------------------- */
 /*                                    Data                                    */
 /* -------------------------------------------------------------------------- */
+variable "archive_file_trigger" {
+  description = "The map of string that will be used to determine trigger to do archive"
+  type        = map(string)
+  default     = {}
+}
+
 variable "compressed_local_file_dir" {
   description = "A path to the directory to store plan time generated local files"
   type        = string
@@ -35,13 +41,6 @@ variable "source_code_dir" {
   description = "An absolute path to the directory containing the code to upload to lambda"
   type        = string
   default     = ""
-}
-
-variable "file_globs" {
-  description = "list of files or globs that you want included from the source_code_dir"
-  type        = list(string)
-  default     = []
-  # default     = ["index.js", "node_modules/**", "yarn.lock", "package.json"]
 }
 
 variable "plaintext_params" {

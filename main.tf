@@ -28,7 +28,6 @@ locals {
 
   raise_bucket_name_empty    = var.is_edge && var.is_create_lambda_bucket == false && length(var.bucket_name) == 0 ? file("Variable `bucket_name` is required when `is_create_lambda_bucket` is false") : "pass"
   raise_local_file_dir_empty = length(var.compressed_local_file_dir) == 0 ? file("Variable `compressed_local_file_dir` is required") : "pass"
-  raise_file_globs_empty     = length(var.file_globs) == 0 ? file("Variable `file_globs` is required") : "pass"
 }
 
 /* -------------------------------------------------------------------------- */
@@ -40,34 +39,18 @@ data "aws_region" "this" {}
 /* -------------------------------------------------------------------------- */
 /*                                  Zip File                                  */
 /* -------------------------------------------------------------------------- */
-# TODO Remove plaintext_params
+resource "null_resource" "lambda" {
+  triggers = var.archive_file_trigger == {} ? {
+    main = base64sha256(file("./${var.source_code_dir}/main.py"))
+  } : var.archive_file_trigger
+}
+
 data "archive_file" "this" {
+  depends_on = [null_resource.lambda]
+
   type        = "zip"
+  source_dir  = var.source_code_dir
   output_path = format("%s/%s.zip", var.compressed_local_file_dir, local.name)
-
-  dynamic "source" {
-    for_each = distinct(flatten([for blob in var.file_globs : fileset(var.source_code_dir, blob)]))
-    content {
-      content = try(
-        file(
-          format("%s/%s", var.source_code_dir, source.value)
-        ),
-        filebase64(
-          format("%s/%s", var.source_code_dir, source.value)
-        ),
-      )
-      filename = source.value
-    }
-  }
-
-  # Optionally write a `config.json` file if any plaintext params were given
-  dynamic "source" {
-    for_each = length(keys(var.plaintext_params)) > 0 ? ["true"] : []
-    content {
-      content  = jsonencode(var.plaintext_params)
-      filename = var.config_file_name
-    }
-  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -273,7 +256,7 @@ resource "aws_lambda_function" "this" {
 
   # Read source code from local
   filename         = local.file_name
-  source_code_hash = filebase64sha256(data.archive_file.this.output_path)
+  source_code_hash = base64sha256(data.archive_file.this.output_path)
 
   # Specification
   timeout                        = var.timeout
