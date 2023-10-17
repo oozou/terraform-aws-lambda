@@ -1,7 +1,14 @@
+/* -------------------------------------------------------------------------- */
+/*                                    Local                                   */
+/* -------------------------------------------------------------------------- */
 locals {
-  name = format("%s-%s-%s", "oozou", "test", "app")
+  name = format("%s-%s-%s", var.generic_info.prefix, var.generic_info.environment, var.generic_info.name)
+  tags = merge({ Terraform = true }, var.generic_info.custom_tags)
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                    Data                                    */
+/* -------------------------------------------------------------------------- */
 data "aws_caller_identity" "this" {}
 data "aws_region" "this" {}
 
@@ -24,7 +31,6 @@ data "aws_iam_policy_document" "lambda_access_kms_policy" {
   }
 }
 
-# TODO fix KMS naming in SNS module
 module "sns" {
   source  = "oozou/sns/aws"
   version = "1.0.1"
@@ -53,13 +59,12 @@ module "sns" {
 
   additional_kms_key_policies = [data.aws_iam_policy_document.lambda_access_kms_policy.json]
 
-  tags = {}
+  tags = local.tags
 }
 
 /* -------------------------------------------------------------------------- */
 /*                                   Lambda                                   */
 /* -------------------------------------------------------------------------- */
-
 resource "aws_iam_policy" "sns_publish_policy" {
   name = format("%s-sns-publish-access", local.name)
   path = "/"
@@ -121,15 +126,12 @@ resource "aws_iam_policy" "secretsmanager_updatesecret_policy" {
 module "lambda_accesskey_rotate" {
   source = "../.."
 
-  prefix      = "oozou"
-  environment = "test"
-  name        = "accesskey_rotate"
-
-  is_edge = false
+  prefix      = var.generic_info.prefix
+  environment = var.generic_info.environment
+  name        = format("%s-accesskey-rotate", var.generic_info.name)
 
   # Source code
   source_code_dir           = "./src"
-  file_globs                = ["access_key_rotate.py"]
   compressed_local_file_dir = "./outputs"
 
   # Lambda Env
@@ -155,14 +157,12 @@ module "lambda_accesskey_rotate" {
     }
   }
 
-
-  tags = {}
+  tags = local.tags
 }
 
 /* -------------------------------------------------------------------------- */
 /*                                   Secret                                   */
 /* -------------------------------------------------------------------------- */
-
 module "secret_kms_key" {
   source  = "oozou/kms-key/aws"
   version = "1.0.0"
@@ -179,7 +179,7 @@ module "secret_kms_key" {
     caller_account_ids = tolist([data.aws_caller_identity.this.account_id])
   }
 
-  tags = merge({}, { "Name" : format("%s-service-secrets", "app") })
+  tags = local.tags
 }
 
 resource "aws_secretsmanager_secret" "accesskey" {
@@ -187,28 +187,26 @@ resource "aws_secretsmanager_secret" "accesskey" {
   description             = "access key secret with rotation"
   kms_key_id              = module.secret_kms_key.key_arn
   recovery_window_in_days = 0
-
 }
 
 resource "aws_secretsmanager_secret_rotation" "accesskey" {
+  depends_on = [
+    module.lambda_accesskey_rotate
+  ]
+
   secret_id           = aws_secretsmanager_secret.accesskey.id
   rotation_lambda_arn = module.lambda_accesskey_rotate.function_arn
   rotation_rules {
     automatically_after_days = 7
   }
-  depends_on = [
-    module.lambda_accesskey_rotate
-  ]
 }
 
 /* -------------------------------------------------------------------------- */
 /*                                 IAM User                                   */
 /* -------------------------------------------------------------------------- */
-
-
 resource "aws_iam_user" "s3_presigned_user" {
   name = "s3_presigned_user"
   path = "/"
 
-  tags = merge({}, { "Name" = "s3_presigned_user" })
+  tags = merge(local.tags, { "Name" = "s3_presigned_user" })
 }
