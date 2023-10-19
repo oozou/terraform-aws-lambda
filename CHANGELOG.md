@@ -2,6 +2,15 @@
 
 All notable changes to this module will be documented in this file.
 
+## [v1.2.1] - 2023-10-19
+
+### Changed
+
+- Changed the method to zip folders instead of specifying individual files.
+  - Adding resources: `null_resource.this`
+  - Adding variables: `archive_file_trigger`
+  - Removing variables: `file_globs`, `local.raise_file_globs_empty`
+
 ## [v1.2.0] - 2023-09-12
 
 ### Added
