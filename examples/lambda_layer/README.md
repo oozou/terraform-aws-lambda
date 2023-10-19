@@ -1,14 +1,16 @@
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-| Name                                                                      | Version  |
-|---------------------------------------------------------------------------|----------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws)                   | >= 4.0.0 |
+| Name                                                                      | Version           |
+|---------------------------------------------------------------------------|-------------------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0          |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws)                   | >= 4.0.0, < 5.0.0 |
 
 ## Providers
 
-No providers.
+| Name                                              | Version           |
+|---------------------------------------------------|-------------------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.0.0, < 5.0.0 |
 
 ## Modules
 
@@ -18,16 +20,15 @@ No providers.
 
 ## Resources
 
-No resources.
+| Name                                                                                                                                      | Type     |
+|-------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| [aws_lambda_layer_version.lambda_layer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_layer_version) | resource |
 
 ## Inputs
 
-| Name                                                                  | Description                                                                                                  | Type       | Default | Required |
-|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|------------|---------|:--------:|
-| <a name="input_custom_tags"></a> [custom\_tags](#input\_custom\_tags) | Custom tags which can be passed on to the AWS resources. They should be key value pairs having distinct keys | `map(any)` | `{}`    |    no    |
-| <a name="input_environment"></a> [environment](#input\_environment)   | Environment Variable used as a prefix                                                                        | `string`   | n/a     |   yes    |
-| <a name="input_name"></a> [name](#input\_name)                        | Name of the ECS cluster and s3 also redis to create                                                          | `string`   | n/a     |   yes    |
-| <a name="input_prefix"></a> [prefix](#input\_prefix)                  | The prefix name of customer to be displayed in AWS console and resource                                      | `string`   | n/a     |   yes    |
+| Name                                                                     | Description                                                                                                                                                                                                                                                                                                                                                       | Type                                                                                                                                          | Default | Required |
+|--------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|---------|:--------:|
+| <a name="input_generic_info"></a> [generic\_info](#input\_generic\_info) | `prefix`      >> The prefix name of customer to be displayed in AWS console and resource<br>  `environment` >> Environment Variable used as a prefix<br>  `name`        >> Name of the ECS cluster and s3 also redis to create<br>  `custom_tags` >> Custom tags which can be passed on to the AWS resources. They should be key value pairs having distinct keys | <pre>object({<br>    prefix      = string<br>    environment = string<br>    name        = string<br>    custom_tags = map(any)<br>  })</pre> | n/a     |   yes    |
 
 ## Outputs
 

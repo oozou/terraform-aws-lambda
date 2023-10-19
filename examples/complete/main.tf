@@ -1,9 +1,9 @@
 module "lambda" {
   source = "../../"
 
-  prefix      = var.prefix
-  environment = var.environment
-  name        = var.name
+  prefix      = var.generic_info.prefix
+  environment = var.generic_info.environment
+  name        = var.generic_info.name
 
   is_edge = false # Defautl is `false`, If you want to publish to the edge don't forget to override aws's provider to virgina
 
@@ -13,7 +13,6 @@ module "lambda" {
 
   # Source code
   source_code_dir           = "./src"
-  file_globs                = ["index.js"]
   compressed_local_file_dir = "./outputs"
 
   # Lambda Env
@@ -70,5 +69,5 @@ module "lambda" {
     desired        = 1
   }
 
-  tags = var.custom_tags
+  tags = var.generic_info.custom_tags
 }
