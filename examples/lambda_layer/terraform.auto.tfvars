@@ -1,6 +1,8 @@
-prefix      = "example"
-environment = "devops"
-name        = "cms"
-custom_tags = {
-  "Remark" = "terraform-aws-lambda-example"
+generic_info = {
+  prefix      = "oozou",
+  environment = "dev",
+  name        = "demo",
+  custom_tags = {
+    Workspace = "999-oozou-demo-dev-wp"
+  }
 }

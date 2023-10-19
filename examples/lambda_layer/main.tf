@@ -1,9 +1,9 @@
 locals {
-  name = format("%s-%s-%s", var.prefix, var.environment, var.name)
+  name = format("%s-%s-%s", var.generic_info.prefix, var.generic_info.environment, var.generic_info.name)
 }
 
 resource "aws_lambda_layer_version" "lambda_layer" {
-  filename   = "./src/requests.zip"
+  filename   = "./requests.zip"
   layer_name = format("%s-requests-layer", local.name)
 
   compatible_runtimes = ["python3.8"]
@@ -12,13 +12,12 @@ resource "aws_lambda_layer_version" "lambda_layer" {
 module "lambda" {
   source = "../../"
 
-  prefix      = var.prefix
-  environment = var.environment
-  name        = var.name
+  prefix      = var.generic_info.prefix
+  environment = var.generic_info.environment
+  name        = var.generic_info.name
 
   # Source code
   source_code_dir           = "./src"
-  file_globs                = ["main.py"]
   compressed_local_file_dir = "./outputs"
 
   # Lambda Env
@@ -40,5 +39,5 @@ module "lambda" {
     # }
   }
 
-  tags = var.custom_tags
+  tags = var.generic_info.custom_tags
 }
