@@ -1,12 +1,11 @@
 module "lambda" {
   source = "../../"
 
-  prefix      = var.prefix
-  environment = var.environment
-  name        = var.name
+  prefix      = var.generic_info.prefix
+  environment = var.generic_info.environment
+  name        = var.generic_info.name
 
   source_code_dir           = "./src"
-  file_globs                = ["index.js"]
   compressed_local_file_dir = "./outputs"
 
   runtime = "nodejs12.x"
@@ -17,11 +16,6 @@ module "lambda" {
     lambda_on_my_account = {
       principal  = "apigateway.amazonaws.com"
       source_arn = "arn:aws:execute-api:ap-southeast-1:557291035112:lk36vflbha/*/*/"
-    }
-    lambda_on_my_another_account_wrong = {
-      principal      = "apigateway.amazonaws.com"
-      source_arn     = "arn:aws:execute-api:ap-southeast-1:224563527112:q6pwa6wgr6/*/*/"
-      source_account = "557291035112"
     }
     lambda_on_my_another_account_correct = {
       principal  = "apigateway.amazonaws.com"
@@ -39,5 +33,5 @@ module "lambda" {
     desired        = 1
   }
 
-  tags = var.custom_tags
+  tags = var.generic_info.custom_tags
 }
