@@ -8,7 +8,9 @@
 
 ## Providers
 
-No providers.
+| Name                                              | Version           |
+|---------------------------------------------------|-------------------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.0.0, < 5.0.0 |
 
 ## Modules
 
@@ -18,7 +20,9 @@ No providers.
 
 ## Resources
 
-No resources.
+| Name                                                                                                                                      | Type     |
+|-------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| [aws_lambda_layer_version.lambda_layer](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_layer_version) | resource |
 
 ## Inputs
 
