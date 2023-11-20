@@ -256,7 +256,7 @@ resource "aws_lambda_function" "this" {
 
   # Read source code from local
   filename         = local.file_name
-  source_code_hash = base64sha256(data.archive_file.this.output_path)
+  source_code_hash = data.archive_file.this.output_base64sha256
 
   # Specification
   timeout                        = var.timeout
