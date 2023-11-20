@@ -2,6 +2,18 @@
 
 All notable changes to this module will be documented in this file.
 
+## [v1.2.2] - 2023-11-20
+
+### Changed
+
+- Resolved an issue with Terraform apply process
+  - From function(data) `base64sha256(data.archive_file.this.output_path)` to use data.output `data.archive_file.this.output_base64sha256`
+- Set null resource provider version `>= 3.0.0`
+
+### Removed
+
+- Unused variables `plaintext_params` and `config_file_name` 
+
 ## [v1.2.1] - 2023-10-19
 
 ### Changed

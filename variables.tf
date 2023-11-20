@@ -43,25 +43,6 @@ variable "source_code_dir" {
   default     = ""
 }
 
-variable "plaintext_params" {
-  description = <<EOF
-  Lambda@Edge does not support env vars, so it is a common pattern to exchange Env vars for values read from a config file.
-  ! PLAINTEXT
-
-  ```
-  const config = JSON.parse(readFileSync('./config.json'))
-  const someConfigValue = config.SomeKey
-  ```
-  EOF
-  type        = map(string)
-  default     = {}
-}
-
-variable "config_file_name" {
-  description = "The name of the file var.plaintext_params will be written to as json"
-  type        = string
-  default     = "config.json"
-}
 /* -------------------------------------------------------------------------- */
 /*                            Resource Based Policy                           */
 /* -------------------------------------------------------------------------- */
