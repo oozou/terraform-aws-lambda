@@ -9,7 +9,7 @@ output "function_arn" {
 }
 output "function_name" {
   description = "Name of AWS Lambda function"
-  value       = local.name
+  value       = format("%s-function", local.name)
 }
 
 output "execution_role_arn" {

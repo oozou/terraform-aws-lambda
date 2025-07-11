@@ -60,7 +60,7 @@ module "s3" {
   count = var.is_edge && var.is_create_lambda_bucket ? 1 : 0
 
   source  = "oozou/s3/aws"
-  version = "1.1.3"
+  version = "2.0.1"
 
   prefix      = var.prefix
   environment = var.environment
@@ -332,7 +332,7 @@ data "aws_iam_policy_document" "cloudwatch_log_group_kms_policy" {
 module "cloudwatch_log_group_kms" {
   count   = var.is_create_cloudwatch_log_group && var.is_create_default_kms && var.cloudwatch_log_group_kms_key_arn == null ? 1 : 0
   source  = "oozou/kms-key/aws"
-  version = "1.0.0"
+  version = "2.0.1"
 
   prefix               = var.prefix
   environment          = var.environment
@@ -340,7 +340,7 @@ module "cloudwatch_log_group_kms" {
   key_type             = "service"
   append_random_suffix = true
   description          = format("Secure Secrets Manager's service secrets for service %s", local.name)
-  additional_policies  = [data.aws_iam_policy_document.cloudwatch_log_group_kms_policy.json]
+  additional_policies  = [data.aws_iam_policy_document.cloudwatch_log_group_kms_policy.json, var.additional_lambda_log_group_kms_policy]
 
   tags = merge(local.tags, { "Name" : format("%s-function-log-group", var.name) })
 }

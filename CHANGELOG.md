@@ -2,6 +2,12 @@
 
 All notable changes to this module will be documented in this file.
 
+## [v1.2.3] - 2025-07-11
+
+### Added
+
+- var additional_lambda_log_group_kms_policy
+
 ## [v1.2.2] - 2023-11-20
 
 ### Changed

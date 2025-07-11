@@ -1,0 +1,43 @@
+{
+  "test_suite": "Terraform AWS Lambda Tests",
+  "start_time": "2025-07-10T17:25:42.582684+07:00",
+  "end_time": "2025-07-10T17:26:43.765937+07:00",
+  "duration": "1m1.18655475s",
+  "total_tests": 6,
+  "passed_tests": 6,
+  "failed_tests": 0,
+  "skipped_tests": 0,
+  "results": [
+    {
+      "name": "TestLambdaCreated",
+      "status": "PASS",
+      "duration": "3.556426167s"
+    },
+    {
+      "name": "TestLambdaConfiguration",
+      "status": "PASS",
+      "duration": "3.257930042s"
+    },
+    {
+      "name": "TestLambdaInvocation",
+      "status": "PASS",
+      "duration": "6.3751935s"
+    },
+    {
+      "name": "TestIAMRoleAndPolicies",
+      "status": "PASS",
+      "duration": "3.132708083s"
+    },
+    {
+      "name": "TestEnvironmentVariables",
+      "status": "PASS",
+      "duration": "3.301117625s"
+    },
+    {
+      "name": "TestCloudWatchLogs",
+      "status": "PASS",
+      "duration": "3.109113916s"
+    }
+  ],
+  "summary": "✅ ALL TESTS PASSED! 6/6 tests successful"
+}
