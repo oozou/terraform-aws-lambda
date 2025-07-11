@@ -57,6 +57,7 @@ module "lambda" {
   # Logging
   is_create_cloudwatch_log_group   = true # Default is `true`
   cloudwatch_log_retention_in_days = 90   # Default is `90`
+  cloudwatch_log_group_kms_key_arn = "arn:aws:kms:ap-southeast-1:562563527952:key/73ab5420-3183-4185-83de-19f6137cb13c"
 
   # Env
   ssm_params = {}
