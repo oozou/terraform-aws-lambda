@@ -57,8 +57,7 @@ module "lambda" {
   # Logging
   is_create_cloudwatch_log_group   = true # Default is `true`
   cloudwatch_log_retention_in_days = 90   # Default is `90`
-  cloudwatch_log_group_kms_key_arn = "arn:aws:kms:ap-southeast-1:562563527952:key/73ab5420-3183-4185-83de-19f6137cb13c"
-
+  additional_lambda_log_group_kms_policy = data.aws_iam_policy_document.allow_github_oidc.json
   # Env
   ssm_params = {}
   environment_variables = {
@@ -71,4 +70,28 @@ module "lambda" {
   }
 
   tags = var.generic_info.custom_tags
+}
+
+
+data "aws_iam_policy_document" "allow_github_oidc" {
+  statement {
+    sid     = "AllowGitHubActionsEncryptDecrypt"
+    effect  = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = [
+        "arn:aws:iam::562563527952:role/oozou-internal-devops-github-action-oidc-role"
+      ]
+    }
+
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+
+    resources = ["*"]
+  }
 }

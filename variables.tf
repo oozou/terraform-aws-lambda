@@ -213,3 +213,9 @@ variable "ssm_params" {
   type        = map(string)
   default     = {}
 }
+
+variable "additional_lambda_log_group_kms_policy" {
+  description = "Additional IAM policy document for the Lambda log group KMS key."
+  type        = string
+  default     = null
+}

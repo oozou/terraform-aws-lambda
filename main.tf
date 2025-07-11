@@ -340,7 +340,7 @@ module "cloudwatch_log_group_kms" {
   key_type             = "service"
   append_random_suffix = true
   description          = format("Secure Secrets Manager's service secrets for service %s", local.name)
-  additional_policies  = [data.aws_iam_policy_document.cloudwatch_log_group_kms_policy.json]
+  additional_policies  = [data.aws_iam_policy_document.cloudwatch_log_group_kms_policy.json, var.additional_lambda_log_group_kms_policy]
 
   tags = merge(local.tags, { "Name" : format("%s-function-log-group", var.name) })
 }
