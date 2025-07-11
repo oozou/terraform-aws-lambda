@@ -55,8 +55,8 @@ module "lambda" {
   }
 
   # Logging
-  is_create_cloudwatch_log_group   = true # Default is `true`
-  cloudwatch_log_retention_in_days = 90   # Default is `90`
+  is_create_cloudwatch_log_group         = true # Default is `true`
+  cloudwatch_log_retention_in_days       = 90   # Default is `90`
   additional_lambda_log_group_kms_policy = data.aws_iam_policy_document.allow_github_oidc.json
   # Env
   ssm_params = {}
@@ -75,11 +75,11 @@ module "lambda" {
 
 data "aws_iam_policy_document" "allow_github_oidc" {
   statement {
-    sid     = "AllowGitHubActionsEncryptDecrypt"
-    effect  = "Allow"
+    sid    = "AllowGitHubActionsEncryptDecrypt"
+    effect = "Allow"
 
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [
         "arn:aws:iam::562563527952:role/oozou-internal-devops-github-action-oidc-role"
       ]
